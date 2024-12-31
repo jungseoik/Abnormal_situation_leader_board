@@ -40,7 +40,7 @@ def sheet2df():
     # Spreadsheet URL and worksheet selection
     spreadsheet_url = "https://docs.google.com/spreadsheets/d/1MY0okfx4niDAH1SovZ8Wh1K9QosL2Cww09ORtPrC-yQ/edit?gid=0#gid=0"
     doc = gc.open_by_url(spreadsheet_url)
-    sheet = doc.worksheet("시트1")
+    sheet = doc.worksheet("model")
     
     # Convert to DataFrame
     df = pd.DataFrame(sheet.get_all_values())

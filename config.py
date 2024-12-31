@@ -26,21 +26,16 @@ TYPES = [
 ]
 
 ON_LOAD_COLUMNS = [
-    "Model",            # 모델 이름
-    "Average F1",       # 평균 F1 Score
-    "군중밀집",          # 특정 벤치마크 성능
-    "배회",              # 특정 벤치마크 성능
-    "쓰러짐",            # 특정 벤치마크 성능
-    "화재"              # 특정 벤치마크 성능
+    "Model",
+    "PIA_absit_F_V1"            # 모델 이름
 ]
 
-OFF_LOAD_COLUMNS = [ "Model", "TASK"]
+OFF_LOAD_COLUMNS = [ "Model link"]
 
 
-FILTER_COLUMNS = ["T",
-                  "Precision",
-                  "Model Size"]
+FILTER_COLUMNS = ["T"]
 
+NUMERIC_COLUMNS = ["PIA_absit_F_V1"]
 
 NUMERIC_INTERVALS = {
     "?": pd.Interval(-1, 0, closed="right"),
