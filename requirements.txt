@@ -1,0 +1,4 @@
+gradio_leaderboard==0.0.10
+oauth2client
+gspread
+gradio
