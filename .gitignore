@@ -171,3 +171,10 @@ cython_debug/
 .pypirc
 
 # *.json
+
+assets
+DevMACS-AI-solution-devmacs
+Research-AI-research-t2v_f1score_evaluator
+.env
+enviroments/abnormal-situation-leaderboard-3ca42d06719e.json
+leaderboard_test

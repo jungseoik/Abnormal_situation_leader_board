@@ -1,10 +1,11 @@
 import gradio as gr
 from gradio_leaderboard import Leaderboard, SelectColumns, ColumnFilter,SearchColumns
-import config
+import enviroments.config as config
 from pathlib import Path
 import pandas as pd
 import random
 from sheet_manager.sheet_loader.sheet2df import sheet2df
+from leaderboard_ui.tab.submit_tab import submit_tab
 abs_path = Path(__file__).parent
 
 main_df = sheet2df()
@@ -65,10 +66,9 @@ with gr.Blocks() as demo:
             # # 세부 정보를 표시할 데이터프레임
             detail_view = gr.Dataframe(label="Prompt Details")
             # # 클릭 이벤트 연결
-            leaderboard.select(on_select, outputs=detail_view)
-            
-        with gr.Tab("Docs"):
-            gr.Markdown((Path(__file__).parent / "docs.md").read_text())
+            # leaderboard.select(on_select, outputs=detail_view)
+        
+        submit_tab()
 
 
 if __name__ == "__main__":

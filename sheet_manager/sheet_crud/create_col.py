@@ -2,8 +2,13 @@ import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 from huggingface_hub import HfApi
+import os
+from dotenv import load_dotenv
+from enviroments.convert import get_json_from_env_var
 
-def push_model_names_to_sheet(json_key_path, spreadsheet_url, sheet_name, access_token, organization):
+load_dotenv()
+
+def push_model_names_to_sheet(spreadsheet_url, sheet_name, access_token, organization):
     """
     Fetches model names from Hugging Face and updates a Google Sheet with the names, links, and HTML links.
 
@@ -17,7 +22,8 @@ def push_model_names_to_sheet(json_key_path, spreadsheet_url, sheet_name, access
     # Authorize Google Sheets API
     scope = ['https://spreadsheets.google.com/feeds',
              'https://www.googleapis.com/auth/drive']
-    credential = ServiceAccountCredentials.from_json_keyfile_name(json_key_path, scope)
+    json_key_dict =get_json_from_env_var("GOOGLE_CREDENTIALS")
+    credential = ServiceAccountCredentials.from_json_keyfile_dict(json_key_dict, scope)
     gc = gspread.authorize(credential)
 
     # Open the Google Spreadsheet
@@ -62,10 +68,9 @@ def push_model_names_to_sheet(json_key_path, spreadsheet_url, sheet_name, access
 
 # Example usage
 if __name__ == "__main__":
-    json_key_path = "enviroments/abnormal-situation-leaderboard-3ca42d06719e.json"
-    spreadsheet_url = "https://docs.google.com/spreadsheets/d/1MY0okfx4niDAH1SovZ8Wh1K9QosL2Cww09ORtPrC-yQ/edit#gid=0"
+    spreadsheet_url = os.getenv("SPREADSHEET_URL") 
+    access_token = os.getenv("ACCESS_TOKEN")
     sheet_name = "시트1"
-    access_token = "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"
     organization = "PIA-SPACE-LAB"
 
-    push_model_names_to_sheet(json_key_path, spreadsheet_url, sheet_name, access_token, organization)
+    push_model_names_to_sheet(spreadsheet_url, sheet_name, access_token, organization)

@@ -1,0 +1,111 @@
+{
+    "VIDEO_CFG": {
+        "window_size": 6,
+        "time_sampling": 15,
+        "tile_size": null
+    },
+    "MODEL_CFG": {
+        "_comment": "",
+        "_link": "",
+        "name": "assets/c7.pt",
+        "type": "clip4clip"
+    },
+    "PROMPT_CFG": [
+        {
+            "event": "D",
+            "top_candidates": 1,
+            "alert_threshold": 1,
+            "prompts": {
+                "normal": [
+                    {
+                        "sentence": "typical"
+                    }
+                ],
+                "abnormal": [
+                    {
+                        "sentence": "cat"
+                    }
+                ]
+            }
+        },
+        {
+            "event": "S",
+            "top_candidates": 1,
+            "alert_threshold": 1,
+            "prompts": {
+                "normal": [
+                    {
+                        "sentence": "a scene of common"
+                    }
+                ],
+                "abnormal": [
+                    {
+                        "sentence": "a display with a part of a team of equipment being used for be smoky with vapor"
+                    },
+                    {
+                        "sentence": "smoke"
+                    },
+                    {
+                        "sentence": "smoke is drifting"
+                    }
+                ]
+            }
+        },
+        {
+            "event": "V",
+            "top_candidates": 1,
+            "alert_threshold": 1,
+            "prompts": {
+                "normal": [
+                    {
+                        "sentence": "normal"
+                    },
+                    {
+                        "sentence": "average"
+                    },
+                    {
+                        "sentence": "typical"
+                    }
+                ],
+                "abnormal": [
+                    {
+                        "sentence": "violence with kicking and punching"
+                    },
+                    {
+                        "sentence": "physical confrontation between people"
+                    },
+                    {
+                        "sentence": "violence"
+                    }
+                ]
+            }
+        },
+        {
+            "event": "F",
+            "top_candidates": 1,
+            "alert_threshold": 1,
+            "prompts": {
+                "normal": [
+                    {
+                        "sentence": "tomato"
+                    }
+                ],
+                "abnormal": [
+                    {
+                        "sentence": "fire"
+                    },
+                    {
+                        "sentence": "video of be on fire with a stove"
+                    },
+                    {
+                        "sentence": "a fire is burning"
+                    },
+                    {
+                        "sentence": "embers are burning"
+                    }
+                ]
+            }
+        }
+        
+    ]
+}

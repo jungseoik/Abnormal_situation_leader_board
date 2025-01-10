@@ -1,6 +1,11 @@
 import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
+from dotenv import load_dotenv
+import os
+import json
+from enviroments.convert import get_json_from_env_var
+load_dotenv()
 
 def sheet2df():
     """
@@ -29,22 +34,17 @@ def sheet2df():
     - gspread
     - oauth2client
     """
-    # Define scope and key path
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    json_key_path = "enviroments/abnormal-situation-leaderboard-3ca42d06719e.json"
-    
-    # Authenticate and open Google Spreadsheet
-    credential = ServiceAccountCredentials.from_json_keyfile_name(json_key_path, scope)
+    json_key_dict =get_json_from_env_var("GOOGLE_CREDENTIALS")
+    credential = ServiceAccountCredentials.from_json_keyfile_dict(json_key_dict, scope)
     gc = gspread.authorize(credential)
     
-    # Spreadsheet URL and worksheet selection
-    spreadsheet_url = "https://docs.google.com/spreadsheets/d/1MY0okfx4niDAH1SovZ8Wh1K9QosL2Cww09ORtPrC-yQ/edit?gid=0#gid=0"
+    spreadsheet_url = os.getenv("SPREADSHEET_URL") 
     doc = gc.open_by_url(spreadsheet_url)
     sheet = doc.worksheet("model")
     
     # Convert to DataFrame
     df = pd.DataFrame(sheet.get_all_values())
-    
     # Clean DataFrame
     df.rename(columns=df.iloc[0], inplace=True)
     df.drop(df.index[0], inplace=True)
