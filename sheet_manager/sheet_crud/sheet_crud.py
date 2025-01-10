@@ -8,14 +8,27 @@ from typing import Optional, List
 load_dotenv()
 
 class SheetManager:
-    def __init__(self, spreadsheet_url: Optional[str] = None):
+    def __init__(self, spreadsheet_url: Optional[str] = None,
+                 worksheet_name: str = "flag",
+                 column_name: str = "huggingface_id"):
         """
         Initialize SheetManager with Google Sheets credentials and connection.
+        
+        Args:
+            spreadsheet_url (str, optional): URL of the Google Spreadsheet. 
+                                           If None, takes from environment variable.
+            worksheet_name (str): Name of the worksheet to operate on.
+                                Defaults to "flag".
+            column_name (str): Name of the column to operate on.
+                             Defaults to "huggingface_id".
         """
         self.spreadsheet_url = spreadsheet_url or os.getenv("SPREADSHEET_URL")
         if not self.spreadsheet_url:
             raise ValueError("Spreadsheet URL not provided and not found in environment variables")
-        
+
+        self.worksheet_name = worksheet_name
+        self.column_name = column_name
+
         # Initialize credentials and client
         self._init_google_client()
         
@@ -23,7 +36,7 @@ class SheetManager:
         self.doc = None
         self.sheet = None
         self.col_index = None
-        self._connect_to_sheet()
+        self._connect_to_sheet(validate_column=True)
 
     def _init_google_client(self):
         """Initialize Google Sheets client with credentials."""
@@ -33,20 +46,111 @@ class SheetManager:
         credentials = ServiceAccountCredentials.from_json_keyfile_dict(json_key_dict, scope)
         self.client = gspread.authorize(credentials)
     
-    def _connect_to_sheet(self):
-        """Connect to the specified Google Sheet and initialize necessary attributes."""
+    def _connect_to_sheet(self, validate_column: bool = True):
+        """
+        Connect to the specified Google Sheet and initialize necessary attributes.
+        
+        Args:
+            validate_column (bool): Whether to validate the column name exists
+        """
         try:
             self.doc = self.client.open_by_url(self.spreadsheet_url)
-            self.sheet = self.doc.worksheet("flag")
             
-            headers = self.sheet.row_values(1)
+            # Try to get the worksheet
             try:
-                self.col_index = headers.index("huggingface_id") + 1
-            except ValueError:
-                raise ValueError("Column 'huggingface_id' not found in sheet")
+                self.sheet = self.doc.worksheet(self.worksheet_name)
+            except gspread.exceptions.WorksheetNotFound:
+                raise ValueError(f"Worksheet '{self.worksheet_name}' not found in spreadsheet")
+            
+            # Get headers
+            self.headers = self.sheet.row_values(1)
+            
+            # Validate column only if requested
+            if validate_column:
+                try:
+                    self.col_index = self.headers.index(self.column_name) + 1
+                except ValueError:
+                    # If column not found, use first available column
+                    if self.headers:
+                        self.column_name = self.headers[0]
+                        self.col_index = 1
+                        print(f"Column '{self.column_name}' not found. Using first available column: '{self.headers[0]}'")
+                    else:
+                        raise ValueError("No columns found in worksheet")
                 
         except Exception as e:
+            if isinstance(e, ValueError):
+                raise e
             raise ConnectionError(f"Failed to connect to sheet: {str(e)}")
+
+    def change_worksheet(self, worksheet_name: str, column_name: Optional[str] = None):
+        """
+        Change the current worksheet and optionally the column.
+        
+        Args:
+            worksheet_name (str): Name of the worksheet to switch to
+            column_name (str, optional): Name of the column to switch to
+        """
+        old_worksheet = self.worksheet_name
+        old_column = self.column_name
+        
+        try:
+            self.worksheet_name = worksheet_name
+            if column_name:
+                self.column_name = column_name
+            
+            # First connect without column validation
+            self._connect_to_sheet(validate_column=False)
+            
+            # Then validate the column if specified
+            if column_name:
+                self.change_column(column_name)
+            else:
+                # Validate existing column in new worksheet
+                try:
+                    self.col_index = self.headers.index(self.column_name) + 1
+                except ValueError:
+                    # If column not found, use first available column
+                    if self.headers:
+                        self.column_name = self.headers[0]
+                        self.col_index = 1
+                        print(f"Column '{old_column}' not found in new worksheet. Using first available column: '{self.headers[0]}'")
+                    else:
+                        raise ValueError("No columns found in worksheet")
+            
+            print(f"Successfully switched to worksheet: {worksheet_name}, using column: {self.column_name}")
+            
+        except Exception as e:
+            # Restore previous state on error
+            self.worksheet_name = old_worksheet
+            self.column_name = old_column
+            self._connect_to_sheet()
+            raise e
+
+    def change_column(self, column_name: str):
+        """
+        Change the target column.
+        
+        Args:
+            column_name (str): Name of the column to switch to
+        """
+        if not self.headers:
+            self.headers = self.sheet.row_values(1)
+            
+        try:
+            self.col_index = self.headers.index(column_name) + 1
+            self.column_name = column_name
+            print(f"Successfully switched to column: {column_name}")
+        except ValueError:
+            raise ValueError(f"Column '{column_name}' not found in worksheet. Available columns: {', '.join(self.headers)}")
+
+    def get_available_worksheets(self) -> List[str]:
+        """Get list of all available worksheets in the spreadsheet."""
+        return [worksheet.title for worksheet in self.doc.worksheets()]
+
+    def get_available_columns(self) -> List[str]:
+        """Get list of all available columns in the current worksheet."""
+        return self.headers if self.headers else self.sheet.row_values(1)
 
     def _reconnect_if_needed(self):
         """Reconnect to the sheet if the connection is lost."""
