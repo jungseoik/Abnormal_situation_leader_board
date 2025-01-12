@@ -1,260 +1,164 @@
-from typing import List, Dict, Optional, Set, Tuple
-import logging
 import os
-from oauth2client.service_account import ServiceAccountCredentials
-import gspread
-from dotenv import load_dotenv
-from enviroments.convert import get_json_from_env_var
-from typing import Optional, List
-from sheet_manager.sheet_crud.sheet_crud import SheetManager
+import logging
+from typing import List, Dict, Optional, Tuple
+from pathlib import Path
+import json
+import numpy as np
 
-load_dotenv()
-class SheetChecker:
-    def __init__(self, sheet_manager):
-        """Initialize SheetChecker with a sheet manager instance."""
-        self.sheet_manager = sheet_manager
-        self.bench_sheet_manager = None
+class BenchChecker:
+    def __init__(self, base_path: str):
+        """Initialize BenchChecker with base assets path.
+        
+        Args:
+            base_path (str): Base path to assets directory containing benchmark folders
+        """
+        self.base_path = Path(base_path)
         self.logger = logging.getLogger(__name__)
-        self._init_bench_sheet()
-
-    def _init_bench_sheet(self):
-        """Initialize sheet manager for the model sheet."""
-        self.bench_sheet_manager = type(self.sheet_manager)(
-            spreadsheet_url=self.sheet_manager.spreadsheet_url,
-            worksheet_name="model",
-            column_name="Model name"
-        )
-    def add_benchmark_column(self, column_name: str):
-        """Add a new benchmark column to the sheet."""
-        try:
-            # Get current headers
-            headers = self.bench_sheet_manager.get_available_columns()
-            
-            # If column already exists, return
-            if column_name in headers:
-                return
-            
-            # Add new column header
-            new_col_index = len(headers) + 1
-            cell = gspread.utils.rowcol_to_a1(1, new_col_index)
-            # Update with 2D array format
-            self.bench_sheet_manager.sheet.update(cell, [[column_name]])  # 값을 2D 배열로 변경
-            self.logger.info(f"Added new benchmark column: {column_name}")
-            
-            # Update headers in bench_sheet_manager
-            self.bench_sheet_manager._connect_to_sheet(validate_column=False)
-            
-        except Exception as e:
-            self.logger.error(f"Error adding benchmark column {column_name}: {str(e)}")
-            raise
-    def validate_benchmark_columns(self, benchmark_columns: List[str]) -> Tuple[List[str], List[str]]:
-        """
-        Validate benchmark columns and add missing ones.
         
-        Args:
-            benchmark_columns: List of benchmark column names to validate
-                
-        Returns:
-            Tuple[List[str], List[str]]: (valid columns, invalid columns)
-        """
-        available_columns = self.bench_sheet_manager.get_available_columns()
-        valid_columns = []
-        invalid_columns = []
-        
-        for col in benchmark_columns:
-            if col in available_columns:
-                valid_columns.append(col)
-            else:
-                try:
-                    self.add_benchmark_column(col)
-                    valid_columns.append(col)
-                    self.logger.info(f"Added new benchmark column: {col}")
-                except Exception as e:
-                    invalid_columns.append(col)
-                    self.logger.error(f"Failed to add benchmark column '{col}': {str(e)}")
-        
-        return valid_columns, invalid_columns
-
-    def check_model_and_benchmarks(self, model_name: str, benchmark_columns: List[str]) -> Dict[str, List[str]]:
-        """
-        Check model existence and which benchmarks need to be filled.
-        
-        Args:
-            model_name: Name of the model to check
-            benchmark_columns: List of benchmark column names to check
-            
-        Returns:
-            Dict with keys:
-                'status': 'model_not_found' or 'model_exists'
-                'empty_benchmarks': List of benchmark columns that need to be filled
-                'filled_benchmarks': List of benchmark columns that are already filled
-                'invalid_benchmarks': List of benchmark columns that don't exist
-        """
-        result = {
-            'status': '',
-            'empty_benchmarks': [],
-            'filled_benchmarks': [],
-            'invalid_benchmarks': []
-        }
-
-        # First check if model exists
-        exists = self.check_model_exists(model_name)
-        if not exists:
-            result['status'] = 'model_not_found'
-            return result
-
-        result['status'] = 'model_exists'
-        
-        # Validate benchmark columns
-        valid_columns, invalid_columns = self.validate_benchmark_columns(benchmark_columns)
-        result['invalid_benchmarks'] = invalid_columns
-        
-        if not valid_columns:
-            return result
-
-        # Check which valid benchmarks are empty
-        self.bench_sheet_manager.change_column("Model name")
-        all_values = self.bench_sheet_manager.get_all_values()
-        row_index = all_values.index(model_name) + 2
-
-        for column in valid_columns:
-            try:
-                self.bench_sheet_manager.change_column(column)
-                value = self.bench_sheet_manager.sheet.cell(row_index, self.bench_sheet_manager.col_index).value
-                if not value or not value.strip():
-                    result['empty_benchmarks'].append(column)
-                else:
-                    result['filled_benchmarks'].append(column)
-            except Exception as e:
-                self.logger.error(f"Error checking column {column}: {str(e)}")
-                result['empty_benchmarks'].append(column)
-
-        return result
-
-    def update_model_info(self, model_name: str, model_info: Dict[str, str]):
-        """Update basic model information columns."""
-        try:
-            for column_name, value in model_info.items():
-                self.bench_sheet_manager.change_column(column_name)
-                self.bench_sheet_manager.push(value)
-            self.logger.info(f"Successfully added new model: {model_name}")
-        except Exception as e:
-            self.logger.error(f"Error updating model info: {str(e)}")
-            raise
-
-    def update_benchmarks(self, model_name: str, benchmark_values: Dict[str, str]):
-        """
-        Update benchmark values.
-        
-        Args:
-            model_name: Name of the model
-            benchmark_values: Dictionary of benchmark column names and their values
-        """
-        try:
-            self.bench_sheet_manager.change_column("Model name")
-            all_values = self.bench_sheet_manager.get_all_values()
-            row_index = all_values.index(model_name) + 2
-
-            for column, value in benchmark_values.items():
-                self.bench_sheet_manager.change_column(column)
-                self.bench_sheet_manager.sheet.update_cell(row_index, self.bench_sheet_manager.col_index, value)
-                self.logger.info(f"Updated benchmark {column} for model {model_name}")
-
-        except Exception as e:
-            self.logger.error(f"Error updating benchmarks: {str(e)}")
-            raise
-
-    def check_model_exists(self, model_name: str) -> bool:
-        """Check if model exists in the sheet."""
-        try:
-            self.bench_sheet_manager.change_column("Model name")
-            values = self.bench_sheet_manager.get_all_values()
-            return model_name in values
-        except Exception as e:
-            self.logger.error(f"Error checking model existence: {str(e)}")
-            return False
-
-
-def process_model_benchmarks(
-    model_name: str,
-    bench_checker: SheetChecker,
-    model_info_func,
-    benchmark_processor_func: callable,
-    benchmark_columns: List[str]
-) -> None:
-    """
-    Process model benchmarks according to the specified workflow.
-    
-    Args:
-        model_name: Name of the model to process
-        bench_checker: SheetChecker instance
-        model_info_func: Function that returns model info (name, link, etc.)
-        benchmark_processor_func: Function that processes empty benchmarks and returns values
-        benchmark_columns: List of benchmark columns to check
-    """
-    try:
-        # Check model and benchmarks
-        check_result = bench_checker.check_model_and_benchmarks(model_name, benchmark_columns)
-        
-        # Handle invalid benchmark columns
-        if check_result['invalid_benchmarks']:
-            bench_checker.logger.warning(
-                f"Skipping invalid benchmark columns: {', '.join(check_result['invalid_benchmarks'])}"
-            )
-
-        # If model doesn't exist, add it
-        if check_result['status'] == 'model_not_found':
-            model_info = model_info_func(model_name)
-            bench_checker.update_model_info(model_name, model_info)
-            bench_checker.logger.info(f"Added new model: {model_name}")
-            # Recheck benchmarks after adding model
-            check_result = bench_checker.check_model_and_benchmarks(model_name, benchmark_columns)
-
-        # Log filled benchmarks
-        if check_result['filled_benchmarks']:
-            bench_checker.logger.info(
-                f"Skipping filled benchmark columns: {', '.join(check_result['filled_benchmarks'])}"
-            )
-
-        # Process empty benchmarks
-        if check_result['empty_benchmarks']:
-            bench_checker.logger.info(
-                f"Processing empty benchmark columns: {', '.join(check_result['empty_benchmarks'])}"
-            )
-            # Get benchmark values from processor function
-            benchmark_values = benchmark_processor_func(model_name, check_result['empty_benchmarks'])
-            # Update benchmarks
-            bench_checker.update_benchmarks(model_name, benchmark_values)
+    def check_benchmark_exists(self, benchmark_name: str) -> bool:
+        """Check if benchmark folder exists."""
+        benchmark_path = self.base_path / benchmark_name
+        exists = benchmark_path.exists() and benchmark_path.is_dir()
+        if exists:
+            self.logger.info(f"Found benchmark directory: {benchmark_name}")
         else:
-            bench_checker.logger.info("No empty benchmark columns to process")
+            self.logger.error(f"Benchmark directory not found: {benchmark_name}")
+        return exists
         
-    except Exception as e:
-        bench_checker.logger.error(f"Error processing model {model_name}: {str(e)}")
-        raise
+    def get_video_list(self, benchmark_name: str) -> List[str]:
+        """Get list of videos from benchmark's dataset directory. Return empty list if no videos found."""
+        dataset_path = self.base_path / benchmark_name / "dataset"
+        videos = []
+        
+        if not dataset_path.exists():
+            self.logger.info(f"Dataset directory exists but no videos found for {benchmark_name}")
+            return videos  # 빈 리스트 반환
+            
+        # Recursively find all .mp4 files
+        for category in dataset_path.glob("*"):
+            if category.is_dir():
+                for video_file in category.glob("*.mp4"):
+                    videos.append(video_file.stem)
+                        
+        self.logger.info(f"Found {len(videos)} videos in {benchmark_name} dataset")
+        return videos
+        
+    def check_model_exists(self, benchmark_name: str, model_name: str) -> bool:
+        """Check if model directory exists in benchmark's models directory."""
+        model_path = self.base_path / benchmark_name / "models" / model_name
+        exists = model_path.exists() and model_path.is_dir()
+        if exists:
+            self.logger.info(f"Found model directory: {model_name}")
+        else:
+            self.logger.error(f"Model directory not found: {model_name}")
+        return exists
+        
+    def check_cfg_files(self, benchmark_name: str, model_name: str, cfg_prompt: str) -> Tuple[bool, bool]:
+        """Check if CFG files/directories exist in both benchmark and model directories."""
+        # Check benchmark CFG json
+        benchmark_cfg = self.base_path / benchmark_name / "CFG" / f"{cfg_prompt}.json"
+        benchmark_cfg_exists = benchmark_cfg.exists() and benchmark_cfg.is_file()
+        
+        # Check model CFG directory
+        model_cfg = self.base_path / benchmark_name / "models" / model_name / "CFG" / cfg_prompt
+        model_cfg_exists = model_cfg.exists() and model_cfg.is_dir()
+        
+        if benchmark_cfg_exists:
+            self.logger.info(f"Found benchmark CFG file: {cfg_prompt}.json")
+        else:
+            self.logger.error(f"Benchmark CFG file not found: {cfg_prompt}.json")
+            
+        if model_cfg_exists:
+            self.logger.info(f"Found model CFG directory: {cfg_prompt}")
+        else:
+            self.logger.error(f"Model CFG directory not found: {cfg_prompt}")
+            
+        return benchmark_cfg_exists, model_cfg_exists
+    def check_vector_files(self, benchmark_name: str, model_name: str, video_list: List[str]) -> bool:
+        """Check if video vectors match with dataset."""
+        vector_path = self.base_path / benchmark_name / "models" / model_name / "vector" / "video"
+        
+        # 비디오가 없는 경우는 무조건 False
+        if not video_list:
+            self.logger.error("No videos found in dataset - cannot proceed")
+            return False
+        
+        # 벡터 디렉토리가 있는지 확인
+        if not vector_path.exists():
+            self.logger.error("Vector directory doesn't exist")
+            return False
+                
+        # 벡터 파일 리스트 가져오기
+        vector_files = [f.stem for f in vector_path.glob("*.npy")]
+        
+        missing_vectors = set(video_list) - set(vector_files)
+        extra_vectors = set(vector_files) - set(video_list)
+        
+        if missing_vectors:
+            self.logger.error(f"Missing vectors for videos: {missing_vectors}")
+            return False
+        if extra_vectors:
+            self.logger.error(f"Extra vectors found: {extra_vectors}")
+            return False
+                
+        self.logger.info(f"Vector status: videos={len(video_list)}, vectors={len(vector_files)}")
+        return len(video_list) == len(vector_files)
+
+    def check_benchmark(self, benchmark_name: str, model_name: str, cfg_prompt: str) -> Dict[str, bool]:
+        """
+        Perform all benchmark checks and return status.
+        """
+        status = {
+            'benchmark_exists': False,
+            'model_exists': False,
+            'cfg_files_exist': False,
+            'vectors_match': False
+        }
+        
+        # Check benchmark directory
+        status['benchmark_exists'] = self.check_benchmark_exists(benchmark_name)
+        if not status['benchmark_exists']:
+            return status
+                
+        # Get video list - but don't stop if no videos found
+        video_list = self.get_video_list(benchmark_name)
+        
+        # Check model directory
+        status['model_exists'] = self.check_model_exists(benchmark_name, model_name)
+        if not status['model_exists']:
+            return status
+                
+        # Check CFG files
+        benchmark_cfg, model_cfg = self.check_cfg_files(benchmark_name, model_name, cfg_prompt)
+        status['cfg_files_exist'] = benchmark_cfg and model_cfg
+        if not status['cfg_files_exist']:
+            return status
+                
+
+        status['vectors_match'] = self.check_vector_files(benchmark_name, model_name, video_list)
+            
+        return status
+
+    def determine_execution_path(self, check_status: Dict[str, bool]) -> str:
+        """Determine which execution path to take based on check results."""
+        if all(check_status.values()):
+            return "execute_with_vectors"
+        elif all(v for k, v in check_status.items() if k != 'vectors_match'):
+            return "execute_without_vectors"
+        else:
+            return "cannot_execute"
 
 # Example usage
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     
-    def get_model_info(model_name: str) -> Dict[str, str]:
-        return {
-            "Model name": model_name,
-            "Model link": f"https://example.com/{model_name}",
-            "Model": f"<a href='https://example.com/{model_name}'>{model_name}</a>"
-        }
-    
-    def process_benchmarks(model_name: str, empty_benchmarks: List[str]) -> Dict[str, str]:
-        # This is where you'd call your benchmark calculation function
-        # Return dictionary of benchmark names and their calculated values
-        return {benchmark: "0.0" for benchmark in empty_benchmarks}
-    
-    sheet_manager = SheetManager()
-    bench_checker = SheetChecker(sheet_manager)
-    
-    # Process benchmarks
-    process_model_benchmarks(
-        "test-model", 
-        bench_checker, 
-        get_model_info, 
-        process_benchmarks,
-        benchmark_columns=["Benchmark A", "Benchmark B", "Benchmark C"]
+    bench_checker = BenchChecker("assets")
+    status = bench_checker.check_benchmark(
+        benchmark_name="huggingface_benchmarks_dataset",
+        model_name="MSRVTT",
+        cfg_prompt="topk"
     )
+    
+    execution_path = bench_checker.determine_execution_path(status)
+    print(f"Checks completed. Execution path: {execution_path}")
+    print(f"Status: {status}")
