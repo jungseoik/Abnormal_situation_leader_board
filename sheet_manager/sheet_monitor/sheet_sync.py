@@ -1,17 +1,12 @@
 import threading
 import time
 from typing import Optional, Callable
-from queue import Queue
 import logging
 
 class SheetMonitor:
     def __init__(self, sheet_manager, check_interval: float = 1.0):
         """
         Initialize SheetMonitor with a sheet manager instance.
-        
-        Args:
-            sheet_manager: Instance of SheetManager class
-            check_interval: Time interval between checks in seconds
         """
         self.sheet_manager = sheet_manager
         self.check_interval = check_interval
@@ -22,9 +17,8 @@ class SheetMonitor:
         self.pause_monitoring = threading.Event()
         self.monitor_paused = threading.Event()
         
-        # Value tracking
-        self.last_values = []
-        self.value_changed = threading.Event()
+        # Queue status
+        self.has_data = threading.Event()
         
         # Logging setup
         logging.basicConfig(level=logging.INFO)
@@ -53,35 +47,49 @@ class SheetMonitor:
     def pause(self):
         """Pause the monitoring."""
         self.pause_monitoring.set()
-        self.monitor_paused.wait()  # Wait until monitoring is actually paused
+        self.monitor_paused.wait()
         self.logger.info("Monitoring paused")
 
+    # def resume(self):
+    #     """Resume the monitoring."""
+    #     self.pause_monitoring.clear()
+    #     self.monitor_paused.clear()
+    #     self.logger.info("Monitoring resumed")
     def resume(self):
         """Resume the monitoring."""
         self.pause_monitoring.clear()
         self.monitor_paused.clear()
-        self.logger.info("Monitoring resumed")
+        # 즉시 체크 수행
+        self.logger.info("Monitoring resumed, checking for new data...")
+        values = self.sheet_manager.get_all_values()
+        if values:
+            self.has_data.set()
+            self.logger.info(f"Found data after resume: {values}")
+
 
     def _monitor_loop(self):
-        """Main monitoring loop that checks for changes in the sheet."""
-        self.last_values = self.sheet_manager.get_all_values()
-        
+        """Main monitoring loop that checks for data in sheet."""
         while self.is_running.is_set():
             if self.pause_monitoring.is_set():
-                self.monitor_paused.set()  # Signal that monitoring is paused
-                self.pause_monitoring.wait()  # Wait for resume signal
+                self.monitor_paused.set()
+                self.pause_monitoring.wait()
                 self.monitor_paused.clear()
-                continue
+                # continue
 
             try:
-                current_values = self.sheet_manager.get_all_values()
+                # Check if there's any data in the sheet
+                values = self.sheet_manager.get_all_values()
+                self.logger.info(f"Monitoring: Current column={self.sheet_manager.column_name}, "
+                            f"Values found={len(values)}, "
+                            f"Has data={self.has_data.is_set()}")
                 
-                # Check for new values
-                if len(current_values) > len(self.last_values):
-                    self.logger.info("Detected new value in sheet")
-                    self.value_changed.set()
+                if values:  # If there's any non-empty value
+                    self.has_data.set()
+                    self.logger.info(f"Data detected: {values}")
+                else:
+                    self.has_data.clear()
+                    self.logger.info("No data in sheet, waiting...")
                 
-                self.last_values = current_values
                 time.sleep(self.check_interval)
                 
             except Exception as e:
@@ -92,11 +100,6 @@ class MainLoop:
     def __init__(self, sheet_manager, sheet_monitor, callback_function: Callable = None):
         """
         Initialize MainLoop with sheet manager and monitor instances.
-        
-        Args:
-            sheet_manager: Instance of SheetManager class
-            sheet_monitor: Instance of SheetMonitor class
-            callback_function: Custom function to be called after processing new value
         """
         self.sheet_manager = sheet_manager
         self.monitor = sheet_monitor
@@ -116,53 +119,94 @@ class MainLoop:
         self.monitor.stop_monitoring()
 
     def process_new_value(self):
-        """Process new value by calling pop function and custom callback."""
+        """Process values by calling pop function for multiple columns and custom callback."""
         try:
-            popped_value = self.sheet_manager.pop()
-            if popped_value:
-                self.logger.info(f"Processed value: {popped_value}")
+            # Store original column
+            original_column = self.sheet_manager.column_name
+            
+            # Pop from huggingface_id column
+            model_id = self.sheet_manager.pop()
+            
+            if model_id:
+                # Pop from benchmark_name column
+                self.sheet_manager.change_column("benchmark_name")
+                benchmark_name = self.sheet_manager.pop()
+                
+                # Pop from prompt_cfg_name column
+                self.sheet_manager.change_column("prompt_cfg_name")
+                prompt_cfg_name = self.sheet_manager.pop()
+                
+                # Return to original column
+                self.sheet_manager.change_column(original_column)
+                
+                self.logger.info(f"Processed values - model_id: {model_id}, "
+                            f"benchmark_name: {benchmark_name}, "
+                            f"prompt_cfg_name: {prompt_cfg_name}")
+                
                 if self.callback:
-                    self.callback(popped_value)  # 커스텀 함수 실행
-            return popped_value
+                    # Pass all three values to callback
+                    self.callback(model_id, benchmark_name, prompt_cfg_name)
+                    
+                return model_id, benchmark_name, prompt_cfg_name
+                
         except Exception as e:
-            self.logger.error(f"Error processing value: {str(e)}")
+            self.logger.error(f"Error processing values: {str(e)}")
+            # Return to original column in case of error
+            try:
+                self.sheet_manager.change_column(original_column)
+            except:
+                pass
             return None
 
     def _main_loop(self):
         """Main processing loop."""
         while self.is_running.is_set():
-            # Wait for value change signal
-            if self.monitor.value_changed.wait(timeout=1.0):
+            # Wait for data to be available
+            if self.monitor.has_data.wait(timeout=1.0):
                 # Pause monitoring
                 self.monitor.pause()
                 
-                # Process the new value
+                # Process the value
                 self.process_new_value()
                 
-                # Clear the value changed flag and resume monitoring
-                self.monitor.value_changed.clear()
+                # Check if there's still data in the sheet
+                values = self.sheet_manager.get_all_values()
+                self.logger.info(f"After processing: Current column={self.sheet_manager.column_name}, "
+                            f"Values remaining={len(values)}")
+                
+                if not values:
+                    self.monitor.has_data.clear()
+                    self.logger.info("All data processed, clearing has_data flag")
+                else:
+                    self.logger.info(f"Remaining data: {values}")
+                
+                # Resume monitoring
                 self.monitor.resume()
+## TODO
+# API 분당 호출 문제로 만약에 참조하다가 실패할 경우 대기했다가 다시 시도하게끔 설계
 
+
+# Example usage
 if __name__ == "__main__":
     import sys
     from pathlib import Path
     sys.path.append(str(Path(__file__).parent.parent.parent))
     from sheet_manager.sheet_crud.sheet_crud import SheetManager
-    def my_custom_function(value):
+
+    def my_custom_function(value , v2, v3):
         print(f"어쩔껀데 어쩔껀데 뭐 어쩔껀데: {value}")
+        print(f"어쩔껀데 어쩔껀데 뭐 어쩔껀데: {v2}")
+        print(f"어쩔껀데 어쩔껀데 뭐 어쩔껀데: {v3}")
+
+
     # Initialize components
     sheet_manager = SheetManager()
-    monitor = SheetMonitor(sheet_manager, check_interval=1.0)
+    monitor = SheetMonitor(sheet_manager, check_interval=10.0)
     main_loop = MainLoop(sheet_manager, monitor, callback_function=my_custom_function)
 
     try:
-        # Start the main loop
         main_loop.start()
-        
-        # Keep the script running
         while True:
-            time.sleep(1)
-            
+            time.sleep(5)
     except KeyboardInterrupt:
-        # Clean shutdown on Ctrl+C
         main_loop.stop()

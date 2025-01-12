@@ -1,11 +1,4 @@
 import gradio as gr
-
-
-# def update_components(submit_type):
-#     if submit_type == "Model":
-#         return gr.update(interactive=True), gr.update(interactive=True), gr.update(interactive=True)
-#     else:
-#         return gr.update(interactive=False), gr.update(interactive=False), gr.update(interactive=False)
 from sheet_manager.sheet_crud.sheet_crud import  SheetManager
 import pandas as pd
 
@@ -25,11 +18,17 @@ def list_to_dataframe(data):
     df = pd.DataFrame([data], columns=headers)
     return df
 
-def model_submit(model_id):
+def model_submit(model_id , benchmark_name, prompt_cfg_name):
     model_id = model_id.split("/")[-1]
     sheet_manager = SheetManager()
     sheet_manager.push(model_id)
-    return list_to_dataframe(sheet_manager.get_all_values())
+    model_q = list_to_dataframe(sheet_manager.get_all_values())
+    sheet_manager.change_column("benchmark_name")
+    sheet_manager.push(benchmark_name)
+    sheet_manager.change_column("prompt_cfg_name")
+    sheet_manager.push(prompt_cfg_name)
+
+    return model_q
 
 def read_queue():
     sheet_manager = SheetManager()
@@ -49,6 +48,16 @@ def submit_tab():
                             placeholder="PIA-SPACE-LAB/T2V_CLIP4Clip",
                             interactive = True
                             )
+                        benchmark_name_textbox = gr.Textbox(
+                            label="benchmark_name", 
+                            placeholder="PiaFSV",
+                            interactive = True
+                            )
+                        prompt_cfg_name_textbox = gr.Textbox(
+                            label="prompt_cfg_name", 
+                            placeholder="topk",
+                            interactive = True
+                            )
                     with gr.Column():
                         gr.Markdown("## 평가를 받아보세요 반드시 허깅페이스에 업로드된 모델이어야 합니다.")
                         gr.Markdown("#### 현재 평가 대기중 모델입니다.")
@@ -62,7 +71,9 @@ def submit_tab():
                     model_submit_button = gr.Button("Submit Eval")
                     model_submit_button.click(
                         fn=model_submit,
-                        inputs=model_id_textbox,
+                        inputs=[model_id_textbox,
+                        benchmark_name_textbox , 
+                        prompt_cfg_name_textbox],
                         outputs=model_queue
                     )
             with gr.Tab("Prompt"):
@@ -108,18 +119,3 @@ def submit_tab():
                     with gr.Column():
                         a = 1
                         gr.Markdown("## 평가를 받아보세요 반드시 허깅페이스에 업로드된 모델이어야 합니다.")
-
-
-        # submit_button = gr.Button("Submit Eval")
-        # submission_result = gr.Markdown()
-
-
-            # model_submit_button.click(
-            #     add_new_eval,
-            #     [
-            #         model_id_textbox,
-
-            #     ],
-            #     submission_result,
-            # )
-
