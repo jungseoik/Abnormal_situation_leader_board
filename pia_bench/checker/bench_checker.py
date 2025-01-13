@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, Tuple
 from pathlib import Path
 import json
 import numpy as np
+logging.basicConfig(level=logging.INFO)
 
 class BenchChecker:
     def __init__(self, base_path: str):
@@ -89,7 +90,8 @@ class BenchChecker:
             return False
                 
         # 벡터 파일 리스트 가져오기
-        vector_files = [f.stem for f in vector_path.glob("*.npy")]
+        # vector_files = [f.stem for f in vector_path.glob("*.npy")]
+        vector_files = [f.stem for f in vector_path.rglob("*.npy")]
         
         missing_vectors = set(video_list) - set(vector_files)
         extra_vectors = set(vector_files) - set(video_list)
@@ -142,15 +144,16 @@ class BenchChecker:
     def determine_execution_path(self, check_status: Dict[str, bool]) -> str:
         """Determine which execution path to take based on check results."""
         if all(check_status.values()):
-            return "execute_with_vectors"
+            print("execute_with_vectors")
+            return True
         elif all(v for k, v in check_status.items() if k != 'vectors_match'):
-            return "execute_without_vectors"
+            print("execute_without_vectors")
+            return False
         else:
             return "cannot_execute"
 
 # Example usage
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     
     bench_checker = BenchChecker("assets")
     status = bench_checker.check_benchmark(

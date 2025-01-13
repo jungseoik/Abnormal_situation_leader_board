@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from typing import Dict, List, Tuple
 from devmacs_core.devmacs_core import DevMACSCore
-from devmacs_core.utils.common.cal import scale_sim, loose_similarity
+from devmacs_core.utils.common.cal import loose_similarity
 from utils.parser import load_config, PromptManager
 import json
 import pandas as pd
@@ -125,7 +125,7 @@ class EventDetector:
         log_filename = f"alarm_calculation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         logging.basicConfig(
             filename=log_filename,
-            level=logging.INFO,
+            level=logging.ERROR,
             format='%(asctime)s - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
@@ -138,8 +138,8 @@ class EventDetector:
             top_k = event_config['top_candidates']
             threshold = event_config['alert_threshold']
             
-            logger.info(f"\nProcessing event: {event}")
-            logger.info(f"Top K: {top_k}, Threshold: {threshold}")
+            # logger.info(f"\nProcessing event: {event}")
+            # logger.info(f"Top K: {top_k}, Threshold: {threshold}")
             
             event_prompts = self._get_event_prompts(event)
 
@@ -156,26 +156,26 @@ class EventDetector:
             # logger.debug(f"Event scores shape: {event_scores.shape}")
             # logger.debug(f"Event scores: {event_scores}")
             # 각 프롬프트와 점수 출력
-            logger.info("\nDEBUG VALUES:")
-            logger.info(f"event_scores: {event_scores}")
-            logger.info(f"indices: {event_prompts['indices']}")
-            logger.info(f"types: {event_prompts['types']}")
+            # logger.info("\nDEBUG VALUES:")
+            # logger.info(f"event_scores: {event_scores}")
+            # logger.info(f"indices: {event_prompts['indices']}")
+            # logger.info(f"types: {event_prompts['types']}")
 
-            logger.info("\nAll prompts and scores:")
-            for idx, (score, prompt_type) in enumerate(zip(event_scores, event_prompts['types'])):
-                logger.info(f"Type: {prompt_type}, Score: {score.item():.4f}")
+            # logger.info("\nAll prompts and scores:")
+            # for idx, (score, prompt_type) in enumerate(zip(event_scores, event_prompts['types'])):
+            #     logger.info(f"Type: {prompt_type}, Score: {score.item():.4f}")
             
             top_k_values, top_k_indices = torch.topk(event_scores, min(top_k, len(event_scores)))
         
-            logger.info(f"top_k_values: {top_k_values}")
-            logger.info(f"top_k_indices (raw): {top_k_indices}")
+            # logger.info(f"top_k_values: {top_k_values}")
+            # logger.info(f"top_k_indices (raw): {top_k_indices}")
             # Top K 결과 출력
-            logger.info(f"\nTop {top_k} selections:")
+            # logger.info(f"\nTop {top_k} selections:")
             for idx, (value, index) in enumerate(zip(top_k_values, top_k_indices)):
                 # indices[index]가 아닌 index를 직접 사용
                 prompt_type = event_prompts['types'][index]  # 수정된 부분
-                logger.info(f"DEBUG: index={index}, types={event_prompts['types']}, selected_type={prompt_type}")
-                logger.info(f"Rank {idx+1}: Type: {prompt_type}, Score: {value.item():.4f}")
+                # logger.info(f"DEBUG: index={index}, types={event_prompts['types']}, selected_type={prompt_type}")
+                # logger.info(f"Rank {idx+1}: Type: {prompt_type}, Score: {value.item():.4f}")
 
             abnormal_count = sum(1 for idx in top_k_indices 
                     if event_prompts['types'][idx] == 'abnormal')  # 수정된 부분
@@ -187,10 +187,10 @@ class EventDetector:
             #                 if event_prompts['types'][idx.item()] == 'abnormal')
             
             # 알람 결정 과정 출력
-            logger.info(f"\nAbnormal count: {abnormal_count}")
+            # logger.info(f"\nAbnormal count: {abnormal_count}")
             alarm_result = 1 if abnormal_count >= threshold else 0
-            logger.info(f"Final alarm decision: {alarm_result}")
-            logger.info("-" * 50)
+            # logger.info(f"Final alarm decision: {alarm_result}")
+            # logger.info("-" * 50)
             
             event_alarms[event] = {
                 'alarm': alarm_result,

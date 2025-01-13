@@ -4,6 +4,7 @@ from devmacs_core.devmacs_core import DevMACSCore
 import json
 from typing import Dict, List, Tuple
 from pathlib import Path
+
 def load_config(config_path: str) -> Dict:
     """JSON 설정 파일을 읽어서 딕셔너리로 반환"""
     with open(config_path, 'r', encoding='utf-8') as f:

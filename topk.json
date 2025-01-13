@@ -12,7 +12,7 @@
     },
     "PROMPT_CFG": [
         {
-            "event": "D",
+            "event": "falldown",
             "top_candidates": 1,
             "alert_threshold": 1,
             "prompts": {
@@ -29,30 +29,7 @@
             }
         },
         {
-            "event": "S",
-            "top_candidates": 1,
-            "alert_threshold": 1,
-            "prompts": {
-                "normal": [
-                    {
-                        "sentence": "a scene of common"
-                    }
-                ],
-                "abnormal": [
-                    {
-                        "sentence": "a display with a part of a team of equipment being used for be smoky with vapor"
-                    },
-                    {
-                        "sentence": "smoke"
-                    },
-                    {
-                        "sentence": "smoke is drifting"
-                    }
-                ]
-            }
-        },
-        {
-            "event": "V",
+            "event": "violence",
             "top_candidates": 1,
             "alert_threshold": 1,
             "prompts": {
@@ -81,7 +58,7 @@
             }
         },
         {
-            "event": "F",
+            "event": "fire",
             "top_candidates": 1,
             "alert_threshold": 1,
             "prompts": {

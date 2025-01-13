@@ -50,11 +50,6 @@ class SheetMonitor:
         self.monitor_paused.wait()
         self.logger.info("Monitoring paused")
 
-    # def resume(self):
-    #     """Resume the monitoring."""
-    #     self.pause_monitoring.clear()
-    #     self.monitor_paused.clear()
-    #     self.logger.info("Monitoring resumed")
     def resume(self):
         """Resume the monitoring."""
         self.pause_monitoring.clear()
@@ -192,12 +187,10 @@ if __name__ == "__main__":
     from pathlib import Path
     sys.path.append(str(Path(__file__).parent.parent.parent))
     from sheet_manager.sheet_crud.sheet_crud import SheetManager
-
-    def my_custom_function(value , v2, v3):
-        print(f"어쩔껀데 어쩔껀데 뭐 어쩔껀데: {value}")
-        print(f"어쩔껀데 어쩔껀데 뭐 어쩔껀데: {v2}")
-        print(f"어쩔껀데 어쩔껀데 뭐 어쩔껀데: {v3}")
-
+    from pia_bench.pipe_line.piepline import PiaBenchMark
+    def my_custom_function(huggingface_id, benchmark_name, prompt_cfg_name):
+        piabenchmark = PiaBenchMark(huggingface_id, benchmark_name, prompt_cfg_name)
+        piabenchmark.bench_start()
 
     # Initialize components
     sheet_manager = SheetManager()

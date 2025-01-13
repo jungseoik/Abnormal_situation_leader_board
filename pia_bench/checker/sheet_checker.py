@@ -237,42 +237,42 @@ def process_model_benchmarks(
         bench_checker.logger.error(f"Error processing model {model_name}: {str(e)}")
         raise
 
+def get_model_info(model_name: str) -> Dict[str, str]:
+    return {
+        "Model name": model_name,
+        "Model link": f"https://huggingface.co/PIA-SPACE-LAB/{model_name}",
+        "Model": f'<a target="_blank" href="https://huggingface.co/PIA-SPACE-LAB/{model_name}" style="color: var(--link-text-color); text-decoration: underline;text-decoration-style: dotted;">{model_name}</a>'
+        
+    }
+
+def process_benchmarks(
+    model_name: str,
+    empty_benchmarks: List[str],
+    cfg_prompt: str
+) -> Dict[str, str]:
+    """
+    Measure benchmark scores for given model with specific configuration.
+    
+    Args:
+        model_name: Name of the model to evaluate
+        empty_benchmarks: List of benchmarks to measure
+        cfg_prompt: Prompt configuration for evaluation
+        
+    Returns:
+        Dict[str, str]: Dictionary mapping benchmark names to their scores
+    """
+    result = {}
+    for benchmark in empty_benchmarks:
+        # 실제 벤치마크 측정 수행
+        # score = measure_benchmark(model_name, benchmark, cfg_prompt)
+        if benchmark == "COCO":
+            score = 0.5
+        elif benchmark == "ImageNet":
+            score = 15.0
+        result[benchmark] = str(score)
+    return result
 # Example usage
 if __name__ == "__main__":
-    
-    def get_model_info(model_name: str) -> Dict[str, str]:
-        return {
-            "Model name": model_name,
-            "Model link": f"https://example.com/{model_name}",
-            "Model": f"<a href='https://example.com/{model_name}'>{model_name}</a>"
-        }
-    
-    def process_benchmarks(
-        model_name: str,
-        empty_benchmarks: List[str],
-        cfg_prompt: str
-    ) -> Dict[str, str]:
-        """
-        Measure benchmark scores for given model with specific configuration.
-        
-        Args:
-            model_name: Name of the model to evaluate
-            empty_benchmarks: List of benchmarks to measure
-            cfg_prompt: Prompt configuration for evaluation
-            
-        Returns:
-            Dict[str, str]: Dictionary mapping benchmark names to their scores
-        """
-        result = {}
-        for benchmark in empty_benchmarks:
-            # 실제 벤치마크 측정 수행
-            # score = measure_benchmark(model_name, benchmark, cfg_prompt)
-            if benchmark == "COCO":
-                score = 0.5
-            elif benchmark == "ImageNet":
-                score = 15.0
-            result[benchmark] = str(score)
-        return result
     
     sheet_manager = SheetManager()
     bench_checker = SheetChecker(sheet_manager)
