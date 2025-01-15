@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from typing import Dict, List, Tuple
 from devmacs_core.devmacs_core import DevMACSCore
+# from devmacs_core.devmacs_core_copy import DevMACSCore
+
 from devmacs_core.utils.common.cal import loose_similarity
 from utils.parser import load_config, PromptManager
 import json
@@ -15,6 +17,8 @@ class EventDetector:
     def __init__(self, config_path: str , model_name:str = None, token:str = None):
         self.config = load_config(config_path)
         self.macs = DevMACSCore.from_huggingface(token=token, repo_id=f"PIA-SPACE-LAB/{model_name}")
+        # self.macs = DevMACSCore(model_type="clip4clip_web")
+
         self.prompt_manager = PromptManager(config_path)
         self.sentences = self.prompt_manager.sentences
         self.text_vectors = self.macs.get_text_vector(self.sentences)
