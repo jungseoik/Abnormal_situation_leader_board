@@ -99,23 +99,3 @@ def submit_tab():
                 with gr.Row():
                     prompt_submit_button = gr.Button("Submit Eval")
 
-            with gr.Tab("Result"):
-                with gr.Row():
-                    with gr.Column():
-                        precision = gr.Dropdown(
-                            choices=["전부"],
-                            label="Result",
-                            multiselect=False,
-                            value=None,
-                            interactive=True,
-                        )
-                        weight_type = gr.Dropdown(
-                            choices=["전부"],
-                            label="Weights type",
-                            multiselect=False,
-                            value=None,
-                            interactive=True,
-                        )
-                    with gr.Column():
-                        a = 1
-                        gr.Markdown("## 평가를 받아보세요 반드시 허깅페이스에 업로드된 모델이어야 합니다.")

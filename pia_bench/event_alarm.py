@@ -25,9 +25,8 @@ class EventDetector:
         
     def process_and_save_predictions(self, vector_base_dir: str, label_base_dir: str, save_base_dir: str):
         """비디오 벡터를 처리하고 결과를 CSV로 저장"""
-        
 
-            # 전체 비디오 파일 수 계산
+        # 전체 비디오 파일 수 계산
         total_videos = sum(len([f for f in os.listdir(os.path.join(vector_base_dir, d)) 
                                 if f.endswith('.npy')]) 
                             for d in os.listdir(vector_base_dir) 

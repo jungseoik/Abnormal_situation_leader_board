@@ -4,13 +4,13 @@ from devmacs_core.devmacs_core import DevMACSCore
 import json
 from typing import Dict, List, Tuple
 from pathlib import Path
+import pandas as pd
 
 def load_config(config_path: str) -> Dict:
     """JSON 설정 파일을 읽어서 딕셔너리로 반환"""
     with open(config_path, 'r', encoding='utf-8') as f:
         return json.load(f)
     
-
 DATA_SET = "dataset"
 CFG = "CFG"
 VECTOR = "vector"
@@ -46,9 +46,55 @@ class PiaBenchMark:
         self.vector_text_path = os.path.join(self.vector_path , TEXT)
         self.vector_video_path = os.path.join(self.vector_path , VIDEO)
 
-
         self.categories = []
 
+    def _create_frame_labels(self, label_data: Dict, total_frames: int) -> pd.DataFrame:
+        """프레임 기반의 레이블 데이터프레임 생성"""
+        colmuns = ['frame'] + sorted(self.categories)
+        df = pd.DataFrame(0, index=range(total_frames), columns=colmuns)
+        df['frame'] = range(total_frames)
+        
+        for clip_info in label_data['clips'].values():
+            category = clip_info['category']
+            if category in self.categories:  # 해당 카테고리가 목록에 있는 경우만 처리
+                start_frame, end_frame = clip_info['timestamp']
+                df.loc[start_frame:end_frame, category] = 1
+                
+        return df
+
+    def preprocess_label_to_csv(self):
+        """데이터셋의 모든 JSON 라벨을 프레임 기반 CSV로 변환"""
+        json_files = []
+        csv_files = []
+        for cate in os.listdir(self.dataset_path):
+            self.categories.append(cate)
+
+        for category in self.categories:
+            category_path = os.path.join(self.dataset_path, category)
+            category_jsons = [os.path.join(category, f) for f in os.listdir(category_path) if f.endswith('.json')]
+            json_files.extend(category_jsons)
+            category_csvs = [os.path.join(category, f) for f in os.listdir(category_path) if f.endswith('.csv')]
+            csv_files.extend(category_csvs)
+
+        if not json_files:
+            raise ValueError("No JSON files found in any category directory")
+        if len(json_files) == len(csv_files):
+            print("All JSON files have already been processed to CSV. No further processing needed.")
+            return
+
+        for json_file in json_files:
+            json_path = os.path.join(self.dataset_path, json_file)
+            video_name = os.path.splitext(json_file)[0] 
+            
+            label_info = load_config(json_path)
+            video_info = label_info['video_info']
+            total_frames = video_info['total_frame']
+            
+            df = self._create_frame_labels( label_info, total_frames)
+            
+            output_path = os.path.join(self.dataset_path, f"{video_name}.csv")
+            df.to_csv(output_path , index=False)
+        print("Complete !")
 
     def preprocess_structure(self):
         os.makedirs(self.dataset_path, exist_ok=True)
@@ -58,7 +104,6 @@ class PiaBenchMark:
         os.makedirs(self.alram_path, exist_ok=True)
         os.makedirs(self.metric_path, exist_ok=True)
         os.makedirs(self.model_name_cfg_name_path , exist_ok=True)
-
 
         for item in os.listdir(self.benchmark_path):
             item_path = os.path.join(self.benchmark_path, item)
@@ -82,5 +127,18 @@ class PiaBenchMark:
             result_dir = self.vector_video_path
         )
 
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+    import os
+    load_dotenv()
 
+    access_token = os.getenv("ACCESS_TOKEN")
+    model_name = "T2V_CLIP4CLIP_MSRVTT"
 
+    benchmark_path = "/home/jungseoik/data/Abnormal_situation_leader_board/assets/PIA"
+    cfg_target_path= "/home/jungseoik/data/Abnormal_situation_leader_board/assets/PIA/CFG/topk.json"
+
+    pia_benchmark = PiaBenchMark(benchmark_path ,model_name=model_name, cfg_target_path= cfg_target_path , token=access_token )
+    pia_benchmark.preprocess_structure()
+    pia_benchmark.preprocess_label_to_csv()  
+    print("Categories identified:", pia_benchmark.categories)
