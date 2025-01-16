@@ -78,6 +78,7 @@ class PiaBenchMark:
 
         if not json_files:
             raise ValueError("No JSON files found in any category directory")
+        
         if len(json_files) == len(csv_files):
             print("All JSON files have already been processed to CSV. No further processing needed.")
             return

@@ -108,8 +108,9 @@ class MetricsEvaluator:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(final_results, f, indent=4)
 
-        return category_metrics
-    
+        # return category_metrics
+        return final_results
+
     def _evaluate_category(self, category: str, pred_path: str, label_path: str) -> pd.DataFrame:
         """카테고리별 평가 수행"""
         results = []
