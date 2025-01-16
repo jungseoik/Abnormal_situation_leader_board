@@ -31,7 +31,7 @@ ON_LOAD_COLUMNS = [
     "PIA_absit_F_V1"            # 모델 이름
 ]
 
-OFF_LOAD_COLUMNS = ["Model link"]
+OFF_LOAD_COLUMNS = ["Model link", "PIA_absit_F_V1 * 100", "PIA * 100" , "Model name"]
 
 
 HIDE_COLUMNS = ["PIA_absit_F_V1 * 100"]

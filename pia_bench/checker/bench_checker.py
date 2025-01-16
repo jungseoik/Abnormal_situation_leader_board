@@ -105,7 +105,18 @@ class BenchChecker:
                 
         self.logger.info(f"Vector status: videos={len(video_list)}, vectors={len(vector_files)}")
         return len(video_list) == len(vector_files)
-
+    
+    def check_metrics_file(self, benchmark_name: str, model_name: str, cfg_prompt: str) -> bool:
+        """Check if overall_metrics.json exists in the model's CFG/metrics directory."""
+        metrics_path = self.base_path / benchmark_name / "models" / model_name / "CFG" / cfg_prompt / "metric" / "overall_metrics.json"
+        exists = metrics_path.exists() and metrics_path.is_file()
+        
+        if exists:
+            self.logger.info(f"Found overall metrics file for {model_name}")
+        else:
+            self.logger.error(f"Overall metrics file not found for {model_name}")
+        return exists
+    
     def check_benchmark(self, benchmark_name: str, model_name: str, cfg_prompt: str) -> Dict[str, bool]:
         """
         Perform all benchmark checks and return status.
@@ -114,7 +125,8 @@ class BenchChecker:
             'benchmark_exists': False,
             'model_exists': False,
             'cfg_files_exist': False,
-            'vectors_match': False
+            'vectors_match': False,
+            'metrics_exist': False
         }
         
         # Check benchmark directory
@@ -122,7 +134,7 @@ class BenchChecker:
         if not status['benchmark_exists']:
             return status
                 
-        # Get video list - but don't stop if no videos found
+        # Get video list
         video_list = self.get_video_list(benchmark_name)
         
         # Check model directory
@@ -135,22 +147,27 @@ class BenchChecker:
         status['cfg_files_exist'] = benchmark_cfg and model_cfg
         if not status['cfg_files_exist']:
             return status
-                
 
+        # Check vectors
         status['vectors_match'] = self.check_vector_files(benchmark_name, model_name, video_list)
+        
+        # Check metrics file (only if vectors match)
+        if status['vectors_match']:
+            status['metrics_exist'] = self.check_metrics_file(benchmark_name, model_name, cfg_prompt)
             
         return status
 
-    def determine_execution_path(self, check_status: Dict[str, bool]) -> str:
+    def get_benchmark_status(self, check_status: Dict[str, bool]) -> str:
         """Determine which execution path to take based on check results."""
-        if all(check_status.values()):
-            print("execute_with_vectors")
-            return True
-        elif all(v for k, v in check_status.items() if k != 'vectors_match'):
-            print("execute_without_vectors")
-            return False
-        else:
+        basic_checks = ['benchmark_exists', 'model_exists', 'cfg_files_exist']
+        if not all(check_status[check] for check in basic_checks):
             return "cannot_execute"
+        if check_status['vectors_match'] and check_status['metrics_exist']:
+            return "all_passed"
+        elif not check_status['vectors_match']:
+            return "no_vectors"
+        else:  # vectors exist but no metrics
+            return "no_metrics"
 
 # Example usage
 if __name__ == "__main__":
@@ -162,6 +179,6 @@ if __name__ == "__main__":
         cfg_prompt="topk"
     )
     
-    execution_path = bench_checker.determine_execution_path(status)
+    execution_path = bench_checker.get_benchmark_status(status)
     print(f"Checks completed. Execution path: {execution_path}")
     print(f"Status: {status}")
