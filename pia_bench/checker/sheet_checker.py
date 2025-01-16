@@ -1,10 +1,7 @@
 from typing import List, Dict, Optional, Set, Tuple
 import logging
-import os
-from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 from dotenv import load_dotenv
-from enviroments.convert import get_json_from_env_var
 from typing import Optional, List
 from sheet_manager.sheet_crud.sheet_crud import SheetManager
 
@@ -277,7 +274,6 @@ if __name__ == "__main__":
     sheet_manager = SheetManager()
     bench_checker = SheetChecker(sheet_manager)
     
-    # Process benchmarks
     process_model_benchmarks(
         "test-model",
         bench_checker,

@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from enviroments.convert import get_json_from_env_var
 from typing import Optional, List
 
-load_dotenv()
+load_dotenv(override=True)
 
 class SheetManager:
     def __init__(self, spreadsheet_url: Optional[str] = None,
@@ -261,6 +261,55 @@ class SheetManager:
         except Exception as e:
             print(f"Error deleting from sheet: {str(e)}")
             raise
+        
+    def update_cell_by_condition(self, condition_column: str, condition_value: str, target_column: str, target_value: str) -> Optional[int]:
+        """
+        Update the value of a cell based on a condition in another column.
+        
+        Args:
+            condition_column (str): The column to check the condition on.
+            condition_value (str): The value to match in the condition column.
+            target_column (str): The column where the value should be updated.
+            target_value (str): The new value to set in the target column.
+        
+        Returns:
+            Optional[int]: The row number where the value was updated, or None if no matching row was found.
+        """
+        try:
+            self._reconnect_if_needed()
+            
+            # Get all column headers
+            headers = self.sheet.row_values(1)
+            
+            # Find the indices for the condition and target columns
+            try:
+                condition_col_index = headers.index(condition_column) + 1
+            except ValueError:
+                raise ValueError(f"조건 칼럼 '{condition_column}'이(가) 없습니다.")
+
+            try:
+                target_col_index = headers.index(target_column) + 1
+            except ValueError:
+                raise ValueError(f"목표 칼럼 '{target_column}'이(가) 없습니다.")
+
+            # Get all rows of data
+            data = self.sheet.get_all_records()
+
+            # Find the row that matches the condition
+            for i, row in enumerate(data):
+                if row.get(condition_column) == condition_value:
+                    # Update the target column in the matching row
+                    row_number = i + 2  # Row index starts at 2 (1 is header)
+                    self.sheet.update_cell(row_number, target_col_index, target_value)
+                    print(f"Updated row {row_number}: Set {target_column} to '{target_value}' where {condition_column} is '{condition_value}'")
+                    return row_number
+            
+            print(f"조건에 맞는 행을 찾을 수 없습니다: {condition_column} = '{condition_value}'")
+            return None
+
+        except Exception as e:
+            print(f"Error updating cell by condition: {str(e)}")
+            raise
 
     def get_all_values(self) -> List[str]:
         """Get all values from the huggingface_id column."""
@@ -272,19 +321,27 @@ if __name__ == "__main__":
     # Initialize sheet manager
     sheet_manager = SheetManager()
     
-    # Push some test values
-    sheet_manager.push("test-model-1")
-    sheet_manager.push("test-model-2")
-    sheet_manager.push("test-model-3")
+    # # Push some test values
+    # sheet_manager.push("test-model-1")
+    # sheet_manager.push("test-model-2")
+    # sheet_manager.push("test-model-3")
     
-    print("Initial values:", sheet_manager.get_all_values())
+    # print("Initial values:", sheet_manager.get_all_values())
     
-    # Pop the most recent value
-    popped = sheet_manager.pop()
-    print(f"Popped value: {popped}")
-    print("After pop:", sheet_manager.get_all_values())
+    # # Pop the most recent value
+    # popped = sheet_manager.pop()
+    # print(f"Popped value: {popped}")
+    # print("After pop:", sheet_manager.get_all_values())
     
-    # Delete a specific value
-    deleted_rows = sheet_manager.delete("test-model-2")
-    print(f"Deleted from rows: {deleted_rows}")
-    print("After delete:", sheet_manager.get_all_values())
+    # # Delete a specific value
+    # deleted_rows = sheet_manager.delete("test-model-2")
+    # print(f"Deleted from rows: {deleted_rows}")
+    # print("After delete:", sheet_manager.get_all_values())
+
+    row_updated = sheet_manager.update_cell_by_condition(
+        condition_column="model", 
+        condition_value="msr", 
+        target_column="pia", 
+        target_value="new_value"
+    )
+

@@ -51,12 +51,14 @@ def submit_tab():
                         benchmark_name_textbox = gr.Textbox(
                             label="benchmark_name", 
                             placeholder="PiaFSV",
-                            interactive = True
+                            interactive = True,
+                            value="PIA"
                             )
                         prompt_cfg_name_textbox = gr.Textbox(
                             label="prompt_cfg_name", 
                             placeholder="topk",
-                            interactive = True
+                            interactive = True,
+                            value="topk"
                             )
                     with gr.Column():
                         gr.Markdown("## 평가를 받아보세요 반드시 허깅페이스에 업로드된 모델이어야 합니다.")

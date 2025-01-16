@@ -20,9 +20,11 @@ def leaderboard_tab():
                         placeholder="Search",
                         label="Search"
                     ),
-                    hide_columns=["PIA_absit_F_V1 * 100"],
+                    hide_columns=config.HIDE_COLUMNS,
                     filter_columns=[
-                        "TASK",
+                        ColumnFilter(
+                            column= "TASK",
+                        ),
                         ColumnFilter(
                             column="PIA_absit_F_V1 * 100",
                             type="slider",
@@ -36,6 +38,15 @@ def leaderboard_tab():
 
                     datatype=config.TYPES,
                     # column_widths=["33%", "10%"],
+                )
+                refresh_button = gr.Button("🔄 Refresh Leaderboard")
 
+                def refresh_leaderboard():
+                    return sheet2df()
+
+                refresh_button.click(
+                    refresh_leaderboard,  
+                    inputs=[],            
+                    outputs=leaderboard,  
                 )
 

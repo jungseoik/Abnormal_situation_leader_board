@@ -26,12 +26,15 @@ TYPES = [
 ]
 
 ON_LOAD_COLUMNS = [
+    "TASK",
     "Model",
     "PIA_absit_F_V1"            # 모델 이름
 ]
 
-OFF_LOAD_COLUMNS = [ "Model link"]
+OFF_LOAD_COLUMNS = ["Model link"]
 
+
+HIDE_COLUMNS = ["PIA_absit_F_V1 * 100"]
 
 FILTER_COLUMNS = ["T"]
 
