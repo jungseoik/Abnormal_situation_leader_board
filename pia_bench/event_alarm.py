@@ -12,6 +12,7 @@ import pandas as pd
 from tqdm import tqdm
 import logging
 from datetime import datetime
+from utils.except_dir import cust_listdir
 
 class EventDetector:
     def __init__(self, config_path: str , model_name:str = None, token:str = None):
@@ -27,13 +28,13 @@ class EventDetector:
         """비디오 벡터를 처리하고 결과를 CSV로 저장"""
 
         # 전체 비디오 파일 수 계산
-        total_videos = sum(len([f for f in os.listdir(os.path.join(vector_base_dir, d)) 
+        total_videos = sum(len([f for f in cust_listdir(os.path.join(vector_base_dir, d)) 
                                 if f.endswith('.npy')]) 
-                            for d in os.listdir(vector_base_dir) 
+                            for d in cust_listdir(vector_base_dir) 
                             if os.path.isdir(os.path.join(vector_base_dir, d)))
         pbar = tqdm(total=total_videos, desc="Processing videos")
         
-        for category in os.listdir(vector_base_dir):
+        for category in cust_listdir(vector_base_dir):
             category_path = os.path.join(vector_base_dir, category)
             if not os.path.isdir(category_path):
                 continue
@@ -42,7 +43,7 @@ class EventDetector:
             save_category_dir = os.path.join(save_base_dir, category)
             os.makedirs(save_category_dir, exist_ok=True)
             
-            for file in os.listdir(category_path):
+            for file in cust_listdir(category_path):
                 if file.endswith('.npy'):
                     video_name = os.path.splitext(file)[0]
                     vector_path = os.path.join(category_path, file)

@@ -1,5 +1,7 @@
 import pandas as pd
 
+EXCLUDE_DIRS = {"@eaDir", 'temp'}
+
 TYPES = [
     "markdown",
     "markdown",

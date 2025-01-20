@@ -2,6 +2,8 @@ import gradio as gr
 from pathlib import Path
 from leaderboard_ui.tab.submit_tab import submit_tab
 from leaderboard_ui.tab.leaderboard_tab import leaderboard_tab
+from leaderboard_ui.tab.dataset_visual_tab import visual_tab
+
 abs_path = Path(__file__).parent
 
 with gr.Blocks() as demo:
@@ -11,6 +13,7 @@ with gr.Blocks() as demo:
     with gr.Tabs():
         leaderboard_tab()
         submit_tab()
+        visual_tab()
 
 if __name__ == "__main__":
     demo.launch()

@@ -5,7 +5,7 @@ import json
 from typing import Dict, List, Tuple
 from pathlib import Path
 import pandas as pd
-
+from utils.except_dir import cust_listdir
 def load_config(config_path: str) -> Dict:
     """JSON 설정 파일을 읽어서 딕셔너리로 반환"""
     with open(config_path, 'r', encoding='utf-8') as f:
@@ -66,14 +66,18 @@ class PiaBenchMark:
         """데이터셋의 모든 JSON 라벨을 프레임 기반 CSV로 변환"""
         json_files = []
         csv_files = []
-        for cate in os.listdir(self.dataset_path):
-            self.categories.append(cate)
+        
+        # categories가 비어있는 경우에만 채우도록 수정
+        if not self.categories:
+            for cate in cust_listdir(self.dataset_path):
+                if os.path.isdir(os.path.join(self.dataset_path, cate)):
+                    self.categories.append(cate)
 
         for category in self.categories:
             category_path = os.path.join(self.dataset_path, category)
-            category_jsons = [os.path.join(category, f) for f in os.listdir(category_path) if f.endswith('.json')]
+            category_jsons = [os.path.join(category, f) for f in cust_listdir(category_path) if f.endswith('.json')]
             json_files.extend(category_jsons)
-            category_csvs = [os.path.join(category, f) for f in os.listdir(category_path) if f.endswith('.csv')]
+            category_csvs = [os.path.join(category, f) for f in cust_listdir(category_path) if f.endswith('.csv')]
             csv_files.extend(category_csvs)
 
         if not json_files:
@@ -106,15 +110,23 @@ class PiaBenchMark:
         os.makedirs(self.metric_path, exist_ok=True)
         os.makedirs(self.model_name_cfg_name_path , exist_ok=True)
 
-        for item in os.listdir(self.benchmark_path):
-            item_path = os.path.join(self.benchmark_path, item)
-            
-            if item.startswith("@") or item in [METRIC ,"README.md",MODEL,  CFG, DATA_SET, VECTOR, ALRAM] or not os.path.isdir(item_path):
-                continue
-            target_path = os.path.join(self.dataset_path, item)
-            if not os.path.exists(target_path):
-                shutil.move(item_path, target_path)
-                self.categories.append(item)
+
+        # dataset 폴더가 이미 존재하고 그 안에 카테고리 폴더들이 있는지 확인
+        if os.path.exists(self.dataset_path) and any(os.path.isdir(os.path.join(self.dataset_path, d)) for d in cust_listdir(self.dataset_path)):
+            # 이미 구성된 구조라면, dataset 폴더에서 카테고리들을 가져옴
+            self.categories = [d for d in cust_listdir(self.dataset_path) if os.path.isdir(os.path.join(self.dataset_path, d))]
+        else:
+            # 처음 실행되는 경우, 기존 로직대로 진행
+            for item in cust_listdir(self.benchmark_path):
+                item_path = os.path.join(self.benchmark_path, item)
+                
+                if item.startswith("@") or item in [METRIC ,"README.md",MODEL,  CFG, DATA_SET, VECTOR, ALRAM] or not os.path.isdir(item_path):
+                    continue
+                target_path = os.path.join(self.dataset_path, item)
+                if not os.path.exists(target_path):
+                    shutil.move(item_path, target_path)
+                    self.categories.append(item)
+                
         for category in self.categories:
             category_path = os.path.join(self.vector_video_path, category)
             os.makedirs(category_path, exist_ok=True)

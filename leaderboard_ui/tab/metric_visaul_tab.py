@@ -9,32 +9,6 @@ import pandas as pd
 import numpy as np
 from utils.bench_meta import process_videos_in_directory
 # Mock 데이터 생성
-def create_mock_data():
-    benchmarks = ['VQA-2023', 'ImageQuality-2024', 'VideoEnhance-2024']
-    categories = ['Animation', 'Game', 'Movie', 'Sports', 'Vlog']
-    
-    data_list = []
-    
-    for benchmark in benchmarks:
-        n_videos = np.random.randint(50, 100)
-        for _ in range(n_videos):
-            category = np.random.choice(categories)
-            
-            data_list.append({
-                "video_name": f"video_{np.random.randint(1000, 9999)}.mp4",
-                "resolution": np.random.choice(["1920x1080", "3840x2160", "1280x720"]),
-                "video_duration": f"{np.random.randint(0, 10)}:{np.random.randint(0, 60)}",
-                "category": category,
-                "benchmark": benchmark,
-                "duration_seconds": np.random.randint(30, 600),
-                "total_frames": np.random.randint(1000, 10000),
-                "file_format": ".mp4",
-                "file_size_mb": round(np.random.uniform(10, 1000), 2),
-                "aspect_ratio": 16/9,
-                "fps": np.random.choice([24, 30, 60])
-            })
-    
-    return pd.DataFrame(data_list)
 
 # Mock 데이터 생성
 df = process_videos_in_directory("/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench")

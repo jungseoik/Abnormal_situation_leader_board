@@ -5,16 +5,32 @@ from sheet_manager.sheet_crud.sheet_crud import SheetManager
 from sheet_manager.sheet_monitor.sheet_sync import SheetMonitor, MainLoop
 import time
 from pia_bench.pipe_line.piepline import BenchmarkPipeline, PipelineConfig
+from sheet_manager.sheet_convert.json2sheet import update_benchmark_json
+import os
+import shutil
+import json
 
 def calculate_total_accuracy(metrics: dict) -> float:
-    overall_metrics = metrics.get("overall_metrics", {})
+    """
+    Calculate the average accuracy across all categories excluding 'micro_avg'.
+
+    Args:
+        metrics (dict): Metrics dictionary containing accuracy values.
+
+    Returns:
+        float: The average accuracy across categories.
+    """
     total_accuracy = 0
     total_count = 0
-    for event_type, values in overall_metrics.items():
+
+    for category, values in metrics.items():
+        if category == "micro_avg":
+            continue  # Skip 'micro_avg'
+
         if "accuracy" in values:
             total_accuracy += values["accuracy"]
             total_count += 1
-            
+
     if total_count == 0:
         raise ValueError("No accuracy values found in the provided metrics dictionary.")
 
@@ -25,8 +41,8 @@ def my_custom_function(huggingface_id, benchmark_name, prompt_cfg_name):
     config = PipelineConfig(
         model_name=model_name,
         benchmark_name=benchmark_name,
-        cfg_target_path=f"/home/jungseoik/data/Abnormal_situation_leader_board/assets/PIA/CFG/{prompt_cfg_name}.json",
-        base_path="assets"
+        cfg_target_path=f"/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench/{benchmark_name}/CFG/{prompt_cfg_name}.json",
+        base_path="/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench"
 )
     pipeline = BenchmarkPipeline(config)
     pipeline.run()
@@ -39,10 +55,17 @@ def my_custom_function(huggingface_id, benchmark_name, prompt_cfg_name):
                                     condition_value=model_name ,
                                     target_column=benchmark_name,
                                     target_value=value)
+    
+    update_benchmark_json(
+    model_name = model_name, 
+    benchmark_data = result, 
+    target_column = benchmark_name  # 타겟 칼럼 파라미터 추가
+)
+    
     print(f"\n파이프라인 실행 결과:")
 
 sheet_manager = SheetManager()
-monitor = SheetMonitor(sheet_manager, check_interval=10.0)
+monitor = SheetMonitor(sheet_manager, check_interval=60.0)
 main_loop = MainLoop(sheet_manager, monitor, callback_function=my_custom_function)
 
 try:
