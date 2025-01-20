@@ -25,7 +25,10 @@ class MetricsEvaluator:
             'violence': {'f1': [], 'accuracy': [], 'precision': [], 'recall': [], 'specificity': []},
             'fire': {'f1': [], 'accuracy': [], 'precision': [], 'recall': [], 'specificity': []}
         }
-        
+
+        # 모든 카테고리의 metrics를 저장할 DataFrame 리스트
+        all_categories_metrics = []
+
         for category in os.listdir(self.pred_dir):
             if not os.path.isdir(os.path.join(self.pred_dir, category)):
                 continue
@@ -37,8 +40,13 @@ class MetricsEvaluator:
             
             # 결과 저장을 위한 데이터프레임 생성
             metrics_df = self._evaluate_category(category, pred_category_path, label_category_path)
+
+            metrics_df['category'] = category
+
             metrics_df.to_csv(os.path.join(save_category_path, f"{category}_metrics.csv"), index=False)
             
+            all_categories_metrics.append(metrics_df)
+
             # 카테고리별 평균 성능 저장
             category_metrics[category] = metrics_df.iloc[-1].to_dict()  # 마지막 row(평균)
             
@@ -61,6 +69,10 @@ class MetricsEvaluator:
                         print(f"Warning: Could not process column {col}: {str(e)}")
                         continue
         
+        # 모든 카테고리의 metrics를 하나의 DataFrame으로 합치기
+        combined_metrics_df = pd.concat(all_categories_metrics, ignore_index=True)
+        # 합쳐진 metrics를 json 파일과 같은 위치에 저장
+        combined_metrics_df.to_csv(os.path.join(self.save_dir, "all_categories_metrics.csv"), index=False)
         # 결과 출력
         print("\nCategory-wise Average Metrics:")
         for category, metrics in category_metrics.items():
