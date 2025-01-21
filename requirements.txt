@@ -13,3 +13,5 @@ numpy
 pandas
 python-dateutil
 tqdm
+plotly
+opencv-python

@@ -30,17 +30,16 @@ TYPES = [
 ON_LOAD_COLUMNS = [
     "TASK",
     "Model",
-    "PIA_absit_F_V1"            # 모델 이름
+    "PIA"            # 모델 이름
 ]
 
-OFF_LOAD_COLUMNS = ["Model link", "PIA_absit_F_V1 * 100", "PIA * 100" , "Model name"]
+OFF_LOAD_COLUMNS = ["Model link", "PIA", "PIA * 100" , "Model name" ]
 
-
-HIDE_COLUMNS = ["PIA_absit_F_V1 * 100"]
+HIDE_COLUMNS = ["PIA * 100"]
 
 FILTER_COLUMNS = ["T"]
 
-NUMERIC_COLUMNS = ["PIA_absit_F_V1"]
+NUMERIC_COLUMNS = ["PIA"]
 
 NUMERIC_INTERVALS = {
     "?": pd.Interval(-1, 0, closed="right"),

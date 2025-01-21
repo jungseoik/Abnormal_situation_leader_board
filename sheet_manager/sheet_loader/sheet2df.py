@@ -7,7 +7,7 @@ import json
 from enviroments.convert import get_json_from_env_var
 load_dotenv()
 
-def sheet2df():
+def sheet2df(sheet_name:str = "model"):
     """
     Reads data from a specified Google Spreadsheet and converts it into a Pandas DataFrame.
 
@@ -41,7 +41,7 @@ def sheet2df():
     
     spreadsheet_url = os.getenv("SPREADSHEET_URL") 
     doc = gc.open_by_url(spreadsheet_url)
-    sheet = doc.worksheet("model")
+    sheet = doc.worksheet(sheet_name)
     
     # Convert to DataFrame
     df = pd.DataFrame(sheet.get_all_values())

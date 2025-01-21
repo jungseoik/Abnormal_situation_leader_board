@@ -37,7 +37,8 @@ def create_mock_data():
     return pd.DataFrame(data_list)
 
 # Mock 데이터 생성
-df = process_videos_in_directory("/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench")
+# df = process_videos_in_directory("/home/piawsa6000/nas192/videos/huggingface_benchmarks_dataset/Leaderboard_bench")
+df = pd.read_csv("sample.csv")
 print("DataFrame shape:", df.shape)
 print("DataFrame columns:", df.columns)
 print("DataFrame head:\n", df.head())
@@ -101,7 +102,7 @@ def submit_tab():
             gr.Markdown("# ✉️✨ Submit your Result here!")
 
 def visual_tab():
-    with gr.Tab("📊 Visualization"):
+    with gr.Tab("📊 Bench Info"):
         with gr.Row():
             benchmark_dropdown = gr.Dropdown(
                 choices=sorted(df['benchmark'].unique().tolist()),

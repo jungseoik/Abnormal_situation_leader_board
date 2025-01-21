@@ -96,3 +96,22 @@ def get_benchmark_dict(
     except Exception as e:
         print(f"Error occurred: {str(e)}")
         return {}
+
+def str2json(json_str):
+    """
+    문자열을 JSON 객체로 변환합니다.
+    
+    Args:
+        json_str (str): JSON 형식의 문자열
+    
+    Returns:
+        dict: 파싱된 JSON 객체, 실패시 None
+    """
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print(f"JSON Parsing Error: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected Error: {e}")
+        return None

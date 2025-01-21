@@ -66,6 +66,7 @@ def process_videos_in_directory(root_dir):
                     metadata = get_video_metadata(file_path, category, benchmark)
                     if metadata:
                         video_metadata_list.append(metadata)
-                        
+    # df = pd.DataFrame(video_metadata_list)
+    # df.to_csv('sample.csv', index=False)
     return pd.DataFrame(video_metadata_list)
 

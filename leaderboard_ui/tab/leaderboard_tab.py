@@ -26,13 +26,13 @@ def leaderboard_tab():
                             column= "TASK",
                         ),
                         ColumnFilter(
-                            column="PIA_absit_F_V1 * 100",
+                            column="PIA * 100",
                             type="slider",
                             min=0,  # 77
                             max=100,  # 92
                             # default=[min_val, max_val],
                             default = [77 ,92],
-                            label="PIA_absit_F_V1"  # 실제 값의 100배로 표시됨,
+                            label="PIA"  # 실제 값의 100배로 표시됨,
                         )
                     ],
 
