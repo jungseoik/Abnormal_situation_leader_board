@@ -2,7 +2,15 @@ import json
 from typing import Dict, List, Tuple
 
 def load_config(config_path: str) -> Dict:
-    """JSON 설정 파일을 읽어서 딕셔너리로 반환"""
+    """
+    JSON 설정 파일을 읽어서 딕셔너리로 반환합니다.
+    
+    Args:
+        config_path (str): JSON 설정 파일의 경로
+        
+    Returns:
+        Dict: 설정 정보가 담긴 딕셔너리
+    """
     with open(config_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 

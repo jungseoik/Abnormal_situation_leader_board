@@ -6,11 +6,11 @@ from typing import Dict, List, Tuple
 from pathlib import Path
 import pandas as pd
 from utils.except_dir import cust_listdir
-def load_config(config_path: str) -> Dict:
-    """JSON 설정 파일을 읽어서 딕셔너리로 반환"""
-    with open(config_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
-    
+from utils.parser import load_config
+from utils.logger import custom_logger
+
+logger = custom_logger(__name__)
+
 DATA_SET = "dataset"
 CFG = "CFG"
 VECTOR = "vector"
@@ -23,7 +23,18 @@ MSRVTT = "MSRVTT"
 MODEL = "models"
 
 class PiaBenchMark:
-    def __init__(self, benchmark_path , cfg_target_path : str = None , model_name : str = MSRVTT , token:str =None):
+    def __init__(self, benchmark_path :str, cfg_target_path : str = None , model_name : str = MSRVTT , token:str =None):
+        """
+        PIA 벤치마크 시스템을 구축 위한 클래스입니다.
+        데이터셋 폴더구조, 벡터 추출, 구조 생성 등의 기능을 제공합니다.
+        
+        Attributes:
+            benchmark_path (str): 벤치마크 기본 경로
+            cfg_target_path (str): 설정 파일 경로
+            model_name (str): 사용할 모델 이름
+            token (str): 인증 토큰
+            categories (List[str]): 처리할 카테고리 목록
+        """
         self.benchmark_path = benchmark_path
         self.token = token
         self.model_name = model_name
@@ -49,7 +60,19 @@ class PiaBenchMark:
         self.categories = []
 
     def _create_frame_labels(self, label_data: Dict, total_frames: int) -> pd.DataFrame:
-        """프레임 기반의 레이블 데이터프레임 생성"""
+        """
+        프레임 기반의 레이블 데이터프레임을 생성합니다.
+        
+        Args:
+            label_data (Dict): 레이블 정보가 담긴 딕셔너리
+            total_frames (int): 총 프레임 수
+            
+        Returns:
+            pd.DataFrame: 프레임별 레이블이 저장된 데이터프레임
+            
+        Note:
+            반환되는 데이터프레임은 각 프레임별로 카테고리의 존재 여부를 0과 1로 표시합니다.
+        """
         colmuns = ['frame'] + sorted(self.categories)
         df = pd.DataFrame(0, index=range(total_frames), columns=colmuns)
         df['frame'] = range(total_frames)
@@ -63,7 +86,16 @@ class PiaBenchMark:
         return df
 
     def preprocess_label_to_csv(self):
-        """데이터셋의 모든 JSON 라벨을 프레임 기반 CSV로 변환"""
+        """
+        데이터셋의 모든 JSON 레이블 파일을 프레임 기반 CSV 파일로 변환합니다.
+        
+        Raises:
+            ValueError: JSON 파일을 찾을 수 없는 경우 발생
+            
+        Note:
+            - 각 카테고리 폴더 내의 JSON 파일을 처리합니다.
+            - 이미 CSV로 변환된 파일은 건너뜁니다.
+        """
         json_files = []
         csv_files = []
         
@@ -81,10 +113,11 @@ class PiaBenchMark:
             csv_files.extend(category_csvs)
 
         if not json_files:
+            logger.error("No JSON files found in any category directory")
             raise ValueError("No JSON files found in any category directory")
         
         if len(json_files) == len(csv_files):
-            print("All JSON files have already been processed to CSV. No further processing needed.")
+            logger.info("All JSON files have already been processed to CSV. No further processing needed.")
             return
 
         for json_file in json_files:
@@ -99,9 +132,23 @@ class PiaBenchMark:
             
             output_path = os.path.join(self.dataset_path, f"{video_name}.csv")
             df.to_csv(output_path , index=False)
-        print("Complete !")
+        logger.info("Complete !")
 
     def preprocess_structure(self):
+        """
+        벤치마크 시스템에 필요한 디렉토리 구조를 생성합니다.
+        
+        생성되는 구조:
+            - dataset/: 데이터셋 저장
+            - cfg/: 설정 파일 저장
+            - vector/: 추출된 벡터 저장
+            - alarm/: 알람 관련 파일 저장
+            - metric/: 평가 지표 저장
+            
+        Note:
+            기존 카테고리 구조가 있다면 유지하고, 없다면 새로 생성합니다.
+        """
+        logger.info("Starting directory structure preprocessing...")
         os.makedirs(self.dataset_path, exist_ok=True)
         os.makedirs(self.cfg_path, exist_ok=True)
         os.makedirs(self.vector_text_path, exist_ok=True)
@@ -131,14 +178,29 @@ class PiaBenchMark:
             category_path = os.path.join(self.vector_video_path, category)
             os.makedirs(category_path, exist_ok=True)
 
-        print("Folder preprocessing completed.")
+        logger.info("Folder preprocessing completed.")
     
     def extract_visual_vector(self):
-        self.devmacs_core = DevMACSCore.from_huggingface(token=self.token, repo_id=f"PIA-SPACE-LAB/{self.model_name}")
-        self.devmacs_core.save_visual_results(
-            vid_dir = self.dataset_path,
-            result_dir = self.vector_video_path
-        )
+        """
+        데이터셋에서 시각적 특징 벡터를 추출합니다.
+        
+        Note:
+            - Hugging Face 모델을 사용하여 특징을 추출합니다.
+            - 추출된 벡터는 vector/video/ 경로에 저장됩니다.
+            
+        Requires:
+            DevMACSCore가 초기화되어 있어야 합니다.
+        """
+        logger.info(f"Starting visual vector extraction using model: {self.model_name}")
+        try:
+            self.devmacs_core = DevMACSCore.from_huggingface(token=self.token, repo_id=f"PIA-SPACE-LAB/{self.model_name}")
+            self.devmacs_core.save_visual_results(
+                vid_dir = self.dataset_path,
+                result_dir = self.vector_video_path
+            )
+        except Exception as e:
+            logger.error(f"Error during vector extraction: {str(e)}")
+            raise
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
