@@ -9,7 +9,7 @@ from sheet_manager.sheet_convert.json2sheet import update_benchmark_json
 import os
 import shutil
 import json
-
+from enviroments.config import BASE_BENCH_PATH
 def calculate_total_accuracy(metrics: dict) -> float:
     """
     Calculate the average accuracy across all categories excluding 'micro_avg'.
@@ -41,8 +41,8 @@ def my_custom_function(huggingface_id, benchmark_name, prompt_cfg_name):
     config = PipelineConfig(
         model_name=model_name,
         benchmark_name=benchmark_name,
-        cfg_target_path=f"/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench/{benchmark_name}/CFG/{prompt_cfg_name}.json",
-        base_path="/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench"
+        cfg_target_path=f"{BASE_BENCH_PATH}/{benchmark_name}/CFG/{prompt_cfg_name}.json",
+        base_path=BASE_BENCH_PATH
 )
     pipeline = BenchmarkPipeline(config)
     pipeline.run()
@@ -65,7 +65,7 @@ def my_custom_function(huggingface_id, benchmark_name, prompt_cfg_name):
     print(f"\n파이프라인 실행 결과:")
 
 sheet_manager = SheetManager()
-monitor = SheetMonitor(sheet_manager, check_interval=60.0)
+monitor = SheetMonitor(sheet_manager, check_interval=15.0)
 main_loop = MainLoop(sheet_manager, monitor, callback_function=my_custom_function)
 
 try:

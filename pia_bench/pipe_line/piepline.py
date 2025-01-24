@@ -19,13 +19,15 @@ from pia_bench.checker.bench_checker import BenchChecker
 
 logging.basicConfig(level=logging.INFO)
 
+from enviroments.config import BASE_BENCH_PATH
+
 @dataclass
 class PipelineConfig:
     """파이프라인 설정을 위한 데이터 클래스"""
     model_name: str
     benchmark_name: str
     cfg_target_path: str
-    base_path: str = "/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench"
+    base_path: str = BASE_BENCH_PATH
 
 class BenchmarkPipelineStatus:
     """파이프라인 상태 및 결과 관리"""
@@ -143,7 +145,7 @@ class BenchmarkPipeline:
         """모든 조건이 충족된 경우의 실행 로직"""
         self.logger.info("전체 파이프라인 실행 중...")
         pia_benchmark = PiaBenchMark(
-                                benchmark_path  = f"/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench/{self.config.benchmark_name}" ,
+                                benchmark_path  = f"{BASE_BENCH_PATH}/{self.config.benchmark_name}" ,
                                 model_name=self.config.model_name, 
                                 cfg_target_path= self.config.cfg_target_path , 
                                 token=self.access_token )
@@ -161,7 +163,7 @@ class BenchmarkPipeline:
         # 구현 필요
 
         pia_benchmark = PiaBenchMark(
-                                benchmark_path  = f"/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench/{self.config.benchmark_name}" ,
+                                benchmark_path  = f"{BASE_BENCH_PATH}/{self.config.benchmark_name}" ,
                                 model_name=self.config.model_name, 
                                 cfg_target_path= self.config.cfg_target_path , 
                                 token=self.access_token )
@@ -189,7 +191,7 @@ class BenchmarkPipeline:
         self.logger.info("메트릭 생성 중...")
         # 구현 필요
         pia_benchmark = PiaBenchMark(
-                                benchmark_path  = f"/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench/{self.config.benchmark_name}" ,
+                                benchmark_path  = f"{BASE_BENCH_PATH}/{self.config.benchmark_name}" ,
                                 model_name=self.config.model_name, 
                                 cfg_target_path= self.config.cfg_target_path , 
                                 token=self.access_token )
@@ -216,7 +218,7 @@ if __name__ == "__main__":
         model_name="T2V_CLIP4CLIP_MSRVTT",
         benchmark_name="PIA",
         cfg_target_path="topk.json",
-        base_path="/mnt/nas_192tb/videos/huggingface_benchmarks_dataset/Leaderboard_bench"
+        base_path=f"{BASE_BENCH_PATH}"
     )
     
     # 파이프라인 실행

@@ -4,7 +4,6 @@ import torch
 from typing import Dict, List, Tuple
 from devmacs_core.devmacs_core import DevMACSCore
 # from devmacs_core.devmacs_core_copy import DevMACSCore
-
 from devmacs_core.utils.common.cal import loose_similarity
 from utils.parser import load_config, PromptManager
 import json
@@ -13,6 +12,9 @@ from tqdm import tqdm
 import logging
 from datetime import datetime
 from utils.except_dir import cust_listdir
+from utils.logger import custom_logger
+
+logger = custom_logger(__name__)
 
 class EventDetector:
     def __init__(self, config_path: str , model_name:str = None, token:str = None):

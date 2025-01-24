@@ -215,5 +215,5 @@ if __name__ == "__main__":
 
     pia_benchmark = PiaBenchMark(benchmark_path ,model_name=model_name, cfg_target_path= cfg_target_path , token=access_token )
     pia_benchmark.preprocess_structure()
-    pia_benchmark.preprocess_label_to_csv()  
+    pia_benchmark.preprocess_label_to_csv()
     print("Categories identified:", pia_benchmark.categories)
