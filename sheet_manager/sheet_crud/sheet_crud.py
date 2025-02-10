@@ -4,24 +4,32 @@ import gspread
 from dotenv import load_dotenv
 from enviroments.convert import get_json_from_env_var
 from typing import Optional, List
-
+from utils.logger import custom_logger
+logger = custom_logger(__name__)
 load_dotenv(override=True)
 
 class SheetManager:
+    """
+    Google 스프레드시트와 상호작용하는 관리 클래스.
+
+    기능:
+    - 특정 시트 및 컬럼을 선택하여 데이터 조회, 변경, 추가, 삭제 가능.
+    - Google API를 활용한 인증 및 데이터 처리.
+    - 스프레드시트의 컬럼을 기반으로 값 변경, 조건부 업데이트 기능 제공.
+
+    환경 변수:
+    - `GOOGLE_CREDENTIALS`: 서비스 계정 JSON 키 값 (Base64 인코딩 또는 JSON 형태).
+    - `SPREADSHEET_URL`: 사용할 스프레드시트 URL.
+
+    Args:
+        spreadsheet_url (Optional[str]): Google 스프레드시트 URL. 기본적으로 환경변수에서 가져옴.
+        worksheet_name (str): 기본적으로 연결할 워크시트 이름. 기본값: `"flag"`.
+        column_name (str): 기본적으로 다룰 컬럼명. 기본값: `"huggingface_id"`.
+    """
     def __init__(self, spreadsheet_url: Optional[str] = None,
                  worksheet_name: str = "flag",
                  column_name: str = "huggingface_id"):
-        """
-        Initialize SheetManager with Google Sheets credentials and connection.
-        
-        Args:
-            spreadsheet_url (str, optional): URL of the Google Spreadsheet. 
-                                           If None, takes from environment variable.
-            worksheet_name (str): Name of the worksheet to operate on.
-                                Defaults to "flag".
-            column_name (str): Name of the column to operate on.
-                             Defaults to "huggingface_id".
-        """
+
         self.spreadsheet_url = spreadsheet_url or os.getenv("SPREADSHEET_URL")
         if not self.spreadsheet_url:
             raise ValueError("Spreadsheet URL not provided and not found in environment variables")
@@ -39,7 +47,7 @@ class SheetManager:
         self._connect_to_sheet(validate_column=True)
 
     def _init_google_client(self):
-        """Initialize Google Sheets client with credentials."""
+        """Google API를 사용하여 인증을 수행하고 클라이언트를 설정합니다."""
         scope = ['https://spreadsheets.google.com/feeds',
                  'https://www.googleapis.com/auth/drive']
         json_key_dict = get_json_from_env_var("GOOGLE_CREDENTIALS")
@@ -48,10 +56,14 @@ class SheetManager:
     
     def _connect_to_sheet(self, validate_column: bool = True):
         """
-        Connect to the specified Google Sheet and initialize necessary attributes.
-        
+        스프레드시트에 연결하고, 컬럼 정보를 초기화합니다.
+
         Args:
-            validate_column (bool): Whether to validate the column name exists
+            validate_column (bool): 컬럼 검증 여부. 기본값은 `True`.
+        
+        Raises:
+            ValueError: 시트가 존재하지 않거나, 컬럼이 없을 경우 발생.
+            ConnectionError: Google Sheets API 호출 실패 시 발생.
         """
         try:
             self.doc = self.client.open_by_url(self.spreadsheet_url)
@@ -74,7 +86,7 @@ class SheetManager:
                     if self.headers:
                         self.column_name = self.headers[0]
                         self.col_index = 1
-                        print(f"Column '{self.column_name}' not found. Using first available column: '{self.headers[0]}'")
+                        logger.info(f"Column '{self.column_name}' not found. Using first available column: '{self.headers[0]}'")
                     else:
                         raise ValueError("No columns found in worksheet")
                 
@@ -85,11 +97,14 @@ class SheetManager:
 
     def change_worksheet(self, worksheet_name: str, column_name: Optional[str] = None):
         """
-        Change the current worksheet and optionally the column.
-        
+        작업할 워크시트와 컬럼을 변경합니다.
+
         Args:
-            worksheet_name (str): Name of the worksheet to switch to
-            column_name (str, optional): Name of the column to switch to
+            worksheet_name (str): 변경할 워크시트 이름.
+            column_name (Optional[str]): 변경할 컬럼 이름. 생략 시 기존 컬럼 유지.
+
+        Raises:
+            ValueError: 시트 또는 컬럼이 존재하지 않을 경우 발생.
         """
         old_worksheet = self.worksheet_name
         old_column = self.column_name
@@ -114,11 +129,11 @@ class SheetManager:
                     if self.headers:
                         self.column_name = self.headers[0]
                         self.col_index = 1
-                        print(f"Column '{old_column}' not found in new worksheet. Using first available column: '{self.headers[0]}'")
+                        logger.info(f"Column '{old_column}' not found in new worksheet. Using first available column: '{self.headers[0]}'")
                     else:
                         raise ValueError("No columns found in worksheet")
             
-            print(f"Successfully switched to worksheet: {worksheet_name}, using column: {self.column_name}")
+            logger.info(f"Successfully switched to worksheet: {worksheet_name}, using column: {self.column_name}")
             
         except Exception as e:
             # Restore previous state on error
@@ -129,10 +144,13 @@ class SheetManager:
 
     def change_column(self, column_name: str):
         """
-        Change the target column.
-        
+        사용 중인 컬럼을 변경합니다.
+
         Args:
-            column_name (str): Name of the column to switch to
+            column_name (str): 변경할 컬럼 이름.
+
+        Raises:
+            ValueError: 컬럼이 존재하지 않을 경우 발생.
         """
         if not self.headers:
             self.headers = self.sheet.row_values(1)
@@ -140,7 +158,7 @@ class SheetManager:
         try:
             self.col_index = self.headers.index(column_name) + 1
             self.column_name = column_name
-            print(f"Successfully switched to column: {column_name}")
+            logger.info(f"Successfully switched to column: {column_name}")
         except ValueError:
             raise ValueError(f"Column '{column_name}' not found in worksheet. Available columns: {', '.join(self.headers)}")
 
@@ -179,7 +197,7 @@ class SheetManager:
             # Update the range
             self.sheet.update(range_name, cells)
         except Exception as e:
-            print(f"Error updating sheet: {str(e)}")
+            logger.error(f"Error updating sheet: {str(e)}")
             raise
 
     def push(self, text: str) -> int:
@@ -211,15 +229,23 @@ class SheetManager:
 
             # Update the cell
             self.sheet.update_cell(next_row, self.col_index, text)
-            print(f"Successfully pushed value: {text} to row {next_row}")
+            logger.info(f"Successfully pushed value: {text} to row {next_row}")
             return next_row
             
         except Exception as e:
-            print(f"Error pushing to sheet: {str(e)}")
+            logger.info(f"Error pushing to sheet: {str(e)}")
             raise
 
     def pop(self) -> Optional[str]:
-        """Remove and return the most recent value."""
+        """
+        지정된 컬럼에서 가장 오래된 데이터를 제거하고 반환합니다.
+
+        Returns:
+            Optional[str]: 제거된 값. 값이 없으면 `None` 반환.
+
+        Raises:
+            Exception: 업데이트 실패 시 발생.
+        """
         try:
             self._reconnect_if_needed()
             data = self._fetch_column_data()
@@ -231,11 +257,11 @@ class SheetManager:
             data.append("")  # Add empty string at the end to maintain sheet size
             
             self._update_sheet(data)
-            print(f"Successfully popped value: {value}")
+            logger.info(f"Successfully popped value: {value}")
             return value
             
         except Exception as e:
-            print(f"Error popping from sheet: {str(e)}")
+            logger.error(f"Error popping from sheet: {str(e)}")
             raise
 
     def delete(self, value: str) -> List[int]:
@@ -247,7 +273,7 @@ class SheetManager:
             # Find all indices before deletion
             indices = [i + 1 for i, v in enumerate(data) if v.strip() == value.strip()]
             if not indices:
-                print(f"Value '{value}' not found in sheet")
+                logger.info(f"Value '{value}' not found in sheet")
                 return []
             
             # Remove matching values and add empty strings at the end
@@ -255,11 +281,11 @@ class SheetManager:
             data.extend([""] * len(indices))  # Add empty strings to maintain sheet size
             
             self._update_sheet(data)
-            print(f"Successfully deleted value '{value}' from rows: {indices}")
+            logger.info(f"Successfully deleted value '{value}' from rows: {indices}")
             return indices
             
         except Exception as e:
-            print(f"Error deleting from sheet: {str(e)}")
+            logger.error(f"Error deleting from sheet: {str(e)}")
             raise
         
     def update_cell_by_condition(self, condition_column: str, condition_value: str, target_column: str, target_value: str) -> Optional[int]:
@@ -301,18 +327,18 @@ class SheetManager:
                     # Update the target column in the matching row
                     row_number = i + 2  # Row index starts at 2 (1 is header)
                     self.sheet.update_cell(row_number, target_col_index, target_value)
-                    print(f"Updated row {row_number}: Set {target_column} to '{target_value}' where {condition_column} is '{condition_value}'")
+                    logger.info(f"Updated row {row_number}: Set {target_column} to '{target_value}' where {condition_column} is '{condition_value}'")
                     return row_number
             
-            print(f"조건에 맞는 행을 찾을 수 없습니다: {condition_column} = '{condition_value}'")
+            logger.info(f"조건에 맞는 행을 찾을 수 없습니다: {condition_column} = '{condition_value}'")
             return None
 
         except Exception as e:
-            print(f"Error updating cell by condition: {str(e)}")
+            logger.error(f"Error updating cell by condition: {str(e)}")
             raise
 
     def get_all_values(self) -> List[str]:
-        """Get all values from the huggingface_id column."""
+        """현재 설정된 컬럼의 모든 데이터를 가져옵니다."""
         self._reconnect_if_needed()
         return [v for v in self._fetch_column_data() if v.strip()]
 
@@ -326,17 +352,17 @@ if __name__ == "__main__":
     # sheet_manager.push("test-model-2")
     # sheet_manager.push("test-model-3")
     
-    # print("Initial values:", sheet_manager.get_all_values())
+    # logger.info("Initial values:", sheet_manager.get_all_values())
     
     # # Pop the most recent value
     # popped = sheet_manager.pop()
-    # print(f"Popped value: {popped}")
-    # print("After pop:", sheet_manager.get_all_values())
+    # logger.info(f"Popped value: {popped}")
+    # logger.info("After pop:", sheet_manager.get_all_values())
     
     # # Delete a specific value
     # deleted_rows = sheet_manager.delete("test-model-2")
-    # print(f"Deleted from rows: {deleted_rows}")
-    # print("After delete:", sheet_manager.get_all_values())
+    # logger.info(f"Deleted from rows: {deleted_rows}")
+    # logger.info("After delete:", sheet_manager.get_all_values())
 
     row_updated = sheet_manager.update_cell_by_condition(
         condition_column="model", 

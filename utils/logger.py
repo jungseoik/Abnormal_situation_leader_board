@@ -3,8 +3,6 @@ import os
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-
-
 def custom_logger(name: str) -> logging.Logger:
     """
     커스텀 로거를 생성합니다.
@@ -83,7 +81,6 @@ def custom_logger(name: str) -> logging.Logger:
     cleanup_old_logs(log_dir)
 
     return logger
-
 
 def cleanup_old_logs(log_dir: Path):
     """10개 이상의 로그 파일이 있을 경우 가장 오래된 것부터 삭제"""

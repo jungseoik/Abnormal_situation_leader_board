@@ -2,7 +2,6 @@ import os
 import json
 from dotenv import load_dotenv
 load_dotenv()
-
 def get_json_from_env_var(env_var_name):
     """
     환경 변수에서 JSON 데이터를 가져와 딕셔너리로 변환하는 함수.
@@ -14,10 +13,8 @@ def get_json_from_env_var(env_var_name):
         raise EnvironmentError(f"환경 변수 '{env_var_name}'가 설정되지 않았습니다.")
 
     try:
-        # 줄바꿈(\n)을 이스케이프 문자(\\n)로 변환
         json_string = json_string.replace("\n", "\\n")
         
-        # JSON 문자열을 딕셔너리로 변환
         json_data = json.loads(json_string)
     except json.JSONDecodeError as e:
         raise ValueError(f"JSON 변환 실패: {e}")

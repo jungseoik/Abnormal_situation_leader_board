@@ -13,9 +13,7 @@ import logging
 from datetime import datetime
 from utils.except_dir import cust_listdir
 from utils.logger import custom_logger
-
 logger = custom_logger(__name__)
-
 class EventDetector:
     def __init__(self, config_path: str , model_name:str = None, token:str = None):
         self.config = load_config(config_path)
@@ -135,7 +133,7 @@ class EventDetector:
             format='%(asctime)s - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
-        logger = logging.getLogger(__name__)
+        # logger = logging.getLogger(__name__)
         
         event_alarms = {}
         

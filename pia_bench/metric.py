@@ -5,7 +5,8 @@ from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_sc
 from typing import Dict, List
 import json
 from utils.except_dir import cust_listdir
-
+from utils.logger import custom_logger
+logger = custom_logger(__name__)
 class MetricsEvaluator:
     def __init__(self, pred_dir: str, label_dir: str, save_dir: str):
         """
@@ -67,7 +68,7 @@ class MetricsEvaluator:
                             if event_type in all_metrics and metric_type in all_metrics[event_type]:
                                 all_metrics[event_type][metric_type].append(category_metrics[category][col])
                     except Exception as e:
-                        print(f"Warning: Could not process column {col}: {str(e)}")
+                        logger.warning(f"Warning: Could not process column {col}: {str(e)}")
                         continue
         
         # 각 DataFrame에서 마지막 행(average)을 제거
@@ -77,46 +78,46 @@ class MetricsEvaluator:
         # 합쳐진 metrics를 json 파일과 같은 위치에 저장
         combined_metrics_df.to_csv(os.path.join(self.save_dir, "all_categories_metrics.csv"), index=False)
         # 결과 출력
-        # print("\nCategory-wise Average Metrics:")
+        # logger.info("\nCategory-wise Average Metrics:")
         # for category, metrics in category_metrics.items():
-        #     print(f"\n{category}:")
+        #     logger.info(f"\n{category}:")
         #     for metric_name, value in metrics.items():
         #         if metric_name != "video_name":
-        #             print(f"{metric_name}: {value:.3f}")
+        #             logger.info(f"{metric_name}: {value:.3f}")
         
-        print("\nCategory-wise Average Metrics:")
+        logger.info("\nCategory-wise Average Metrics:")
         for category, metrics in category_metrics.items():
-            print(f"\n{category}:")
+            logger.info(f"\n{category}:")
             for metric_name, value in metrics.items():
                 if metric_name != "video_name":
                     try:
                         if isinstance(value, str):
-                            print(f"{metric_name}: {value}")
+                            logger.info(f"{metric_name}: {value}")
                         elif metric_name in ['tp', 'tn', 'fp', 'fn']:
-                            print(f"{metric_name}: {int(value)}")
+                            logger.info(f"{metric_name}: {int(value)}")
                         else:
-                            print(f"{metric_name}: {float(value):.3f}")
+                            logger.info(f"{metric_name}: {float(value):.3f}")
                     except (ValueError, TypeError):
-                        print(f"{metric_name}: {value}")
+                        logger.info(f"{metric_name}: {value}")
         # 전체 평균 계산 및 출력
-        print("\n" + "="*50)
-        print("Overall Average Metrics Across All Categories:")
-        print("="*50)
+        logger.info("\n" + "="*50)
+        logger.info("Overall Average Metrics Across All Categories:")
+        logger.info("="*50)
         
         # for event_type in all_metrics:
-        #     print(f"\n{event_type}:")
+        #     logger.info(f"\n{event_type}:")
         #     for metric_type, values in all_metrics[event_type].items():
         #         avg_value = np.mean(values)
-        #         print(f"{metric_type}: {avg_value:.3f}")
+        #         logger.info(f"{metric_type}: {avg_value:.3f}")
                 
         for event_type in all_metrics:
-            print(f"\n{event_type}:")
+            logger.info(f"\n{event_type}:")
             for metric_type, values in all_metrics[event_type].items():
                 avg_value = np.mean(values)
                 if metric_type in ['tp', 'tn', 'fp', 'fn']:  # 정수 값
-                    print(f"{metric_type}: {int(avg_value)}")
+                    logger.info(f"{metric_type}: {int(avg_value)}")
                 else:  # 소수점 값
-                    print(f"{metric_type}: {avg_value:.3f}")
+                    logger.info(f"{metric_type}: {avg_value:.3f}")
         ##################################################################################################        
                 # 최종 결과를 저장할 딕셔너리
         final_results = {
@@ -134,11 +135,11 @@ class MetricsEvaluator:
         
         # 전체 평균 계산 및 저장
         for event_type in all_metrics:
-            # print(f"\n{event_type}:")
+            # logger.info(f"\n{event_type}:")
             final_results["overall_metrics"][event_type] = {}
             for metric_type, values in all_metrics[event_type].items():
                 avg_value = float(np.mean(values))
-                # print(f"{metric_type}: {avg_value:.3f}")
+                # logger.info(f"{metric_type}: {avg_value:.3f}")
                 final_results["overall_metrics"][event_type][metric_type] = avg_value
         
         # JSON 파일로 저장
@@ -178,7 +179,7 @@ class MetricsEvaluator:
             label_path_full = os.path.join(label_path, label_file)
             
             if not os.path.exists(label_path_full):
-                print(f"Warning: Label file not found for {video_name}")
+                logger.warning(f"Warning: Label file not found for {video_name}")
                 continue
                 
             label_df = pd.read_csv(label_path_full)
@@ -215,21 +216,6 @@ class MetricsEvaluator:
         metrics_df = pd.concat([metrics_df, pd.DataFrame([avg_metrics])], ignore_index=True)
         
         return metrics_df
-    
-    # def _calculate_metrics(self, y_true: np.ndarray, y_pred: np.ndarray) -> Dict:
-    #     """성능 지표 계산"""
-    #     tn = np.sum((y_true == 0) & (y_pred == 0))
-    #     fp = np.sum((y_true == 0) & (y_pred == 1))
-        
-    #     metrics = {
-    #         'f1': f1_score(y_true, y_pred, zero_division=0),
-    #         'accuracy': accuracy_score(y_true, y_pred),
-    #         'precision': precision_score(y_true, y_pred, zero_division=0),
-    #         'recall': recall_score(y_true, y_pred, zero_division=0),
-    #         'specificity': tn / (tn + fp) if (tn + fp) > 0 else 0
-    #     }
-        
-    #     return metrics
     
 
     def calculate_accumulated_metrics(self, all_categories_metrics_df: pd.DataFrame) -> Dict:

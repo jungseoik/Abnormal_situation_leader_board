@@ -12,13 +12,30 @@ import json
 from enviroments.config import BASE_BENCH_PATH
 def calculate_total_accuracy(metrics: dict) -> float:
     """
-    Calculate the average accuracy across all categories excluding 'micro_avg'.
+    모든 카테고리의 평균 정확도를 계산합니다. 'micro_avg' 카테고리는 제외됩니다.
 
     Args:
-        metrics (dict): Metrics dictionary containing accuracy values.
+        metrics (Dict[str, Dict[str, float]]): 정확도 값을 포함하는 메트릭 딕셔너리
+            형식: {
+                "카테고리1": {"accuracy": float, ...},
+                "카테고리2": {"accuracy": float, ...},
+                ...
+            }
 
     Returns:
-        float: The average accuracy across categories.
+        float: 모든 카테고리의 평균 정확도 값
+
+    Raises:
+        ValueError: 메트릭 딕셔너리에 accuracy 값이 하나도 없는 경우 발생
+
+    Examples:
+        >>> metrics = {
+        ...     "category1": {"accuracy": 0.8},
+        ...     "category2": {"accuracy": 0.9},
+        ...     "micro_avg": {"accuracy": 0.85}
+        ... }
+        >>> calculate_total_accuracy(metrics)
+        0.85
     """
     total_accuracy = 0
     total_count = 0
@@ -36,7 +53,16 @@ def calculate_total_accuracy(metrics: dict) -> float:
 
     return total_accuracy / total_count
 
-def my_custom_function(huggingface_id, benchmark_name, prompt_cfg_name):
+def callback_custom_funciton(huggingface_id, benchmark_name, prompt_cfg_name):
+    """
+    벤치마크 파이프라인을 실행하고 결과를 시트에 업데이트하는 콜백 함수입니다.
+
+    Args:
+        huggingface_id (str): Hugging Face 모델 ID
+        benchmark_name (str): 벤치마크 이름
+        prompt_cfg_name (str): 프롬프트 설정 파일 이름
+
+    """
     model_name = huggingface_id.split("/")[-1]
     config = PipelineConfig(
         model_name=model_name,
@@ -67,7 +93,7 @@ def my_custom_function(huggingface_id, benchmark_name, prompt_cfg_name):
 if __name__ == "__main__":
     sheet_manager = SheetManager()
     monitor = SheetMonitor(sheet_manager, check_interval=15.0)
-    main_loop = MainLoop(sheet_manager, monitor, callback_function=my_custom_function)
+    main_loop = MainLoop(sheet_manager, monitor, callback_function=callback_custom_funciton)
 
     try:
         main_loop.start()

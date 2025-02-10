@@ -2,7 +2,8 @@ import json
 from sheet_manager.sheet_crud.sheet_crud import SheetManager
 import json
 from typing import Optional, Dict
-
+from utils.logger import custom_logger
+logger = custom_logger(__name__)
 def update_benchmark_json(
     model_name: str, 
     benchmark_data: dict, 
@@ -32,11 +33,9 @@ def update_benchmark_json(
     )
     
     if row:
-        print(f"Successfully updated {target_column} data for model: {model_name}")
+        logger.info(f"Successfully updated {target_column} data for model: {model_name}")
     else:
-        print(f"Model {model_name} not found in the sheet")
-
-
+        logger.info(f"Model {model_name} not found in the sheet")
 
 def get_benchmark_dict(
     model_name: str,
@@ -69,14 +68,14 @@ def get_benchmark_dict(
         )
         
         if not target_row:
-            print(f"Model {model_name} not found in the sheet")
+            logger.info(f"Model {model_name} not found in the sheet")
             return {}
             
         # 타겟 칼럼의 JSON 문자열 가져오기
         json_str = target_row.get(target_column)
         
         if not json_str:
-            print(f"No data found in {target_column} for model: {model_name}")
+            logger.info(f"No data found in {target_column} for model: {model_name}")
             return {}
             
         # JSON 문자열을 딕셔너리로 변환
@@ -86,15 +85,15 @@ def get_benchmark_dict(
         if save_path:
             with open(save_path, 'w', encoding='utf-8') as f:
                 json.dump(result_dict, f, ensure_ascii=False, indent=2)
-            print(f"Successfully saved dictionary to: {save_path}")
+            logger.info(f"Successfully saved dictionary to: {save_path}")
             
         return result_dict
         
     except json.JSONDecodeError:
-        print(f"Failed to parse JSON data for model: {model_name}")
+        logger.info(f"Failed to parse JSON data for model: {model_name}")
         return {}
     except Exception as e:
-        print(f"Error occurred: {str(e)}")
+        logger.error(f"Error occurred: {str(e)}")
         return {}
 
 def str2json(json_str):
@@ -110,8 +109,8 @@ def str2json(json_str):
     try:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
-        print(f"JSON Parsing Error: {e}")
+        logger.error(f"JSON Parsing Error: {e}")
         return None
     except Exception as e:
-        print(f"Unexpected Error: {e}")
+        logger.error(f"Unexpected Error: {e}")
         return None

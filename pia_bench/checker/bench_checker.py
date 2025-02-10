@@ -4,8 +4,10 @@ from typing import List, Dict, Optional, Tuple
 from pathlib import Path
 import json
 import numpy as np
-logging.basicConfig(level=logging.INFO)
 
+# logging.basicConfig(level=logging.INFO)
+from utils.logger import custom_logger
+logger = custom_logger(__name__)
 class BenchChecker:
     def __init__(self, base_path: str):
         """Initialize BenchChecker with base assets path.
@@ -14,16 +16,16 @@ class BenchChecker:
             base_path (str): Base path to assets directory containing benchmark folders
         """
         self.base_path = Path(base_path)
-        self.logger = logging.getLogger(__name__)
+        # logger = logging.getLogger(__name__)
         
     def check_benchmark_exists(self, benchmark_name: str) -> bool:
         """Check if benchmark folder exists."""
         benchmark_path = self.base_path / benchmark_name
         exists = benchmark_path.exists() and benchmark_path.is_dir()
         if exists:
-            self.logger.info(f"Found benchmark directory: {benchmark_name}")
+            logger.info(f"Found benchmark directory: {benchmark_name}")
         else:
-            self.logger.error(f"Benchmark directory not found: {benchmark_name}")
+            logger.error(f"Benchmark directory not found: {benchmark_name}")
         return exists
         
     def get_video_list(self, benchmark_name: str) -> List[str]:
@@ -32,7 +34,7 @@ class BenchChecker:
         videos = []
         
         if not dataset_path.exists():
-            self.logger.info(f"Dataset directory exists but no videos found for {benchmark_name}")
+            logger.info(f"Dataset directory exists but no videos found for {benchmark_name}")
             return videos  # 빈 리스트 반환
             
         # Recursively find all .mp4 files
@@ -41,7 +43,7 @@ class BenchChecker:
                 for video_file in category.glob("*.mp4"):
                     videos.append(video_file.stem)
                         
-        self.logger.info(f"Found {len(videos)} videos in {benchmark_name} dataset")
+        logger.info(f"Found {len(videos)} videos in {benchmark_name} dataset")
         return videos
         
     def check_model_exists(self, benchmark_name: str, model_name: str) -> bool:
@@ -49,9 +51,9 @@ class BenchChecker:
         model_path = self.base_path / benchmark_name / "models" / model_name
         exists = model_path.exists() and model_path.is_dir()
         if exists:
-            self.logger.info(f"Found model directory: {model_name}")
+            logger.info(f"Found model directory: {model_name}")
         else:
-            self.logger.error(f"Model directory not found: {model_name}")
+            logger.error(f"Model directory not found: {model_name}")
         return exists
         
     def check_cfg_files(self, benchmark_name: str, model_name: str, cfg_prompt: str) -> Tuple[bool, bool]:
@@ -65,14 +67,14 @@ class BenchChecker:
         model_cfg_exists = model_cfg.exists() and model_cfg.is_dir()
         
         if benchmark_cfg_exists:
-            self.logger.info(f"Found benchmark CFG file: {cfg_prompt}.json")
+            logger.info(f"Found benchmark CFG file: {cfg_prompt}.json")
         else:
-            self.logger.error(f"Benchmark CFG file not found: {cfg_prompt}.json")
+            logger.error(f"Benchmark CFG file not found: {cfg_prompt}.json")
             
         if model_cfg_exists:
-            self.logger.info(f"Found model CFG directory: {cfg_prompt}")
+            logger.info(f"Found model CFG directory: {cfg_prompt}")
         else:
-            self.logger.error(f"Model CFG directory not found: {cfg_prompt}")
+            logger.error(f"Model CFG directory not found: {cfg_prompt}")
             
         return benchmark_cfg_exists, model_cfg_exists
     def check_vector_files(self, benchmark_name: str, model_name: str, video_list: List[str]) -> bool:
@@ -81,12 +83,12 @@ class BenchChecker:
         
         # 비디오가 없는 경우는 무조건 False
         if not video_list:
-            self.logger.error("No videos found in dataset - cannot proceed")
+            logger.error("No videos found in dataset - cannot proceed")
             return False
         
         # 벡터 디렉토리가 있는지 확인
         if not vector_path.exists():
-            self.logger.error("Vector directory doesn't exist")
+            logger.error("Vector directory doesn't exist")
             return False
                 
         # 벡터 파일 리스트 가져오기
@@ -97,13 +99,13 @@ class BenchChecker:
         extra_vectors = set(vector_files) - set(video_list)
         
         if missing_vectors:
-            self.logger.error(f"Missing vectors for videos: {missing_vectors}")
+            logger.error(f"Missing vectors for videos: {missing_vectors}")
             return False
         if extra_vectors:
-            self.logger.error(f"Extra vectors found: {extra_vectors}")
+            logger.error(f"Extra vectors found: {extra_vectors}")
             return False
                 
-        self.logger.info(f"Vector status: videos={len(video_list)}, vectors={len(vector_files)}")
+        logger.info(f"Vector status: videos={len(video_list)}, vectors={len(vector_files)}")
         return len(video_list) == len(vector_files)
     
     def check_metrics_file(self, benchmark_name: str, model_name: str, cfg_prompt: str) -> bool:
@@ -112,9 +114,9 @@ class BenchChecker:
         exists = metrics_path.exists() and metrics_path.is_file()
         
         if exists:
-            self.logger.info(f"Found overall metrics file for {model_name}")
+            logger.info(f"Found overall metrics file for {model_name}")
         else:
-            self.logger.error(f"Overall metrics file not found for {model_name}")
+            logger.error(f"Overall metrics file not found for {model_name}")
         return exists
     
     def check_benchmark(self, benchmark_name: str, model_name: str, cfg_prompt: str) -> Dict[str, bool]:

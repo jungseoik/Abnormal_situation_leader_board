@@ -1,7 +1,6 @@
 import gradio as gr
 from sheet_manager.sheet_crud.sheet_crud import  SheetManager
 import pandas as pd
-
 def list_to_dataframe(data):
     """
     리스트 데이터를 데이터프레임으로 변환하는 함수.

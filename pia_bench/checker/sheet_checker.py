@@ -1,17 +1,16 @@
 from typing import List, Dict, Optional, Set, Tuple
-import logging
 import gspread
 from dotenv import load_dotenv
-from typing import Optional, List
 from sheet_manager.sheet_crud.sheet_crud import SheetManager
-
+from utils.logger import custom_logger
+logger = custom_logger(__name__)
 load_dotenv()
 class SheetChecker:
     def __init__(self, sheet_manager):
         """Initialize SheetChecker with a sheet manager instance."""
         self.sheet_manager = sheet_manager
         self.bench_sheet_manager = None
-        self.logger = logging.getLogger(__name__)
+        # logger = logging.getLogger(__name__)
         self._init_bench_sheet()
 
     def _init_bench_sheet(self):
@@ -36,13 +35,13 @@ class SheetChecker:
             cell = gspread.utils.rowcol_to_a1(1, new_col_index)
             # Update with 2D array format
             self.bench_sheet_manager.sheet.update(cell, [[column_name]])  # 값을 2D 배열로 변경
-            self.logger.info(f"Added new benchmark column: {column_name}")
+            logger.info(f"Added new benchmark column: {column_name}")
             
             # Update headers in bench_sheet_manager
             self.bench_sheet_manager._connect_to_sheet(validate_column=False)
             
         except Exception as e:
-            self.logger.error(f"Error adding benchmark column {column_name}: {str(e)}")
+            logger.error(f"Error adding benchmark column {column_name}: {str(e)}")
             raise
     def validate_benchmark_columns(self, benchmark_columns: List[str]) -> Tuple[List[str], List[str]]:
         """
@@ -65,10 +64,10 @@ class SheetChecker:
                 try:
                     self.add_benchmark_column(col)
                     valid_columns.append(col)
-                    self.logger.info(f"Added new benchmark column: {col}")
+                    logger.info(f"Added new benchmark column: {col}")
                 except Exception as e:
                     invalid_columns.append(col)
-                    self.logger.error(f"Failed to add benchmark column '{col}': {str(e)}")
+                    logger.error(f"Failed to add benchmark column '{col}': {str(e)}")
         
         return valid_columns, invalid_columns
 
@@ -123,7 +122,7 @@ class SheetChecker:
                 else:
                     result['filled_benchmarks'].append(column)
             except Exception as e:
-                self.logger.error(f"Error checking column {column}: {str(e)}")
+                logger.error(f"Error checking column {column}: {str(e)}")
                 result['empty_benchmarks'].append(column)
 
         return result
@@ -134,9 +133,9 @@ class SheetChecker:
             for column_name, value in model_info.items():
                 self.bench_sheet_manager.change_column(column_name)
                 self.bench_sheet_manager.push(value)
-            self.logger.info(f"Successfully added new model: {model_name}")
+            logger.info(f"Successfully added new model: {model_name}")
         except Exception as e:
-            self.logger.error(f"Error updating model info: {str(e)}")
+            logger.error(f"Error updating model info: {str(e)}")
             raise
 
     def update_benchmarks(self, model_name: str, benchmark_values: Dict[str, str]):
@@ -155,10 +154,10 @@ class SheetChecker:
             for column, value in benchmark_values.items():
                 self.bench_sheet_manager.change_column(column)
                 self.bench_sheet_manager.sheet.update_cell(row_index, self.bench_sheet_manager.col_index, value)
-                self.logger.info(f"Updated benchmark {column} for model {model_name}")
+                logger.info(f"Updated benchmark {column} for model {model_name}")
 
         except Exception as e:
-            self.logger.error(f"Error updating benchmarks: {str(e)}")
+            logger.error(f"Error updating benchmarks: {str(e)}")
             raise
 
     def check_model_exists(self, model_name: str) -> bool:
@@ -168,7 +167,7 @@ class SheetChecker:
             values = self.bench_sheet_manager.get_all_values()
             return model_name in values
         except Exception as e:
-            self.logger.error(f"Error checking model existence: {str(e)}")
+            logger.error(f"Error checking model existence: {str(e)}")
             return False
 
 

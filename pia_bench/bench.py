@@ -1,14 +1,12 @@
 import os
 import shutil
 from devmacs_core.devmacs_core import DevMACSCore
-import json
 from typing import Dict, List, Tuple
 from pathlib import Path
 import pandas as pd
 from utils.except_dir import cust_listdir
 from utils.parser import load_config
 from utils.logger import custom_logger
-
 logger = custom_logger(__name__)
 
 DATA_SET = "dataset"

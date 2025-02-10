@@ -15,3 +15,6 @@ python-dateutil
 tqdm
 plotly
 opencv-python
+pia@git+https://github.com/TeamPIA/Package-Common-AI-pia_ai_package.git@release_v1.7.1#egg=pia
+devmacs_core@git+https://github.com/TeamPIA/DevMACS-AI-devmacs_core.git@v0.3.2#egg=devmacs_core
+devmacs_evaluator@git+https://github.com/TeamPIA/DevMACS-AI-devmacs_evaluator.git@v0.2.0#egg=devmacs_evaluator

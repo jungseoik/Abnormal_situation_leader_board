@@ -5,22 +5,19 @@ from pia_bench.metric import MetricsEvaluator
 from sheet_manager.sheet_crud.sheet_crud import SheetManager
 from pia_bench.bench import PiaBenchMark
 from dotenv import load_dotenv
-from typing import Optional, List , Dict
 import os
 load_dotenv()
 import numpy as np
-from typing import Dict, Tuple
 from typing import Dict, Optional, Tuple
 import logging
 from dataclasses import dataclass
 from sheet_manager.sheet_checker.sheet_check import SheetChecker
-from sheet_manager.sheet_crud.sheet_crud import SheetManager
-from pia_bench.checker.bench_checker import BenchChecker
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
+from utils.logger import custom_logger
+logger = custom_logger(__name__)
 
 from enviroments.config import BASE_BENCH_PATH
-
 @dataclass
 class PipelineConfig:
     """파이프라인 설정을 위한 데이터 클래스"""
@@ -161,7 +158,6 @@ class BenchmarkPipeline:
         """벡터 생성이 필요한 경우의 실행 로직"""
         self.logger.info("벡터 생성 중...")
         # 구현 필요
-
         pia_benchmark = PiaBenchMark(
                                 benchmark_path  = f"{BASE_BENCH_PATH}/{self.config.benchmark_name}" ,
                                 model_name=self.config.model_name, 
