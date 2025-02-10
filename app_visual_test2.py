@@ -1,12 +1,11 @@
 import gradio as gr
 from pathlib import Path
-from leaderboard_ui.tab.submit_tab import submit_tab
-from leaderboard_ui.tab.leaderboard_tab import leaderboard_tab
-abs_path = Path(__file__).parent
+from ui.tab.leaderboard_tab import leaderboard_tab
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
+abs_path = Path(__file__).parent
 
 # Mock 데이터 생성
 def create_mock_data():

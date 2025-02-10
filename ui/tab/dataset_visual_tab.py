@@ -1,7 +1,7 @@
 import gradio as gr
 from pathlib import Path
-from leaderboard_ui.tab.submit_tab import submit_tab
-from leaderboard_ui.tab.leaderboard_tab import leaderboard_tab
+from ui.tab.submit_tab import submit_tab
+from ui.tab.leaderboard_tab import leaderboard_tab
 abs_path = Path(__file__).parent
 import plotly.express as px
 import plotly.graph_objects as go
