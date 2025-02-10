@@ -180,7 +180,6 @@ class MainLoop:
 ## TODO
 # API 분당 호출 문제로 만약에 참조하다가 실패할 경우 대기했다가 다시 시도하게끔 설계
 
-
 # Example usage
 if __name__ == "__main__":
     import sys

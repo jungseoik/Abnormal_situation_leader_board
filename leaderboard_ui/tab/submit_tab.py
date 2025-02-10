@@ -78,26 +78,5 @@ def submit_tab():
                         prompt_cfg_name_textbox],
                         outputs=model_queue
                     )
-            with gr.Tab("Prompt"):
-                with gr.Row():
-                    with gr.Column():
-                        prompt_cfg_selector = gr.Dropdown(
-                            choices=["전부"],
-                            label="Prompt_CFG",
-                            multiselect=False,
-                            value=None,
-                            interactive=True,
-                        )
-                        weight_type = gr.Dropdown(
-                            choices=["전부"],
-                            label="Weights type",
-                            multiselect=False,
-                            value=None,
-                            interactive=True,
-                        )
-                    with gr.Column():
-                        gr.Markdown("## 평가를 받아보세요 반드시 허깅페이스에 업로드된 모델이어야 합니다.")
 
-                with gr.Row():
-                    prompt_submit_button = gr.Button("Submit Eval")
 

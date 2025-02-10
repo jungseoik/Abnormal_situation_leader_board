@@ -356,63 +356,6 @@ def metric_visual_tab():
                 inputs=[model_dropdown, column_dropdown, category_dropdown, metrics_select],
                 outputs=[confusion_matrix_plot, category_metrics_plot]
             )        
-        # def update_confusion_matrix(model, column, category):
-        #     if not all([model, column, category]):
-        #         return None
-                
-        #     try:
-        #         # 선택된 모델의 데이터 가져오기
-        #         selected_data = df[df['Model name'] == model][column].iloc[0]
-        #         metrics = str2json(selected_data)
-                
-        #         if metrics and category in metrics:
-        #             category_data = metrics[category]
-                    
-        #             # 혼동 행렬 데이터
-        #             confusion_data = {
-        #                 'tp': category_data['tp'],
-        #                 'tn': category_data['tn'],
-        #                 'fp': category_data['fp'],
-        #                 'fn': category_data['fn']
-        #             }
-                    
-        #             # 히트맵 생성
-        #             z = [[confusion_data['tn'], confusion_data['fp']], 
-        #                     [confusion_data['fn'], confusion_data['tp']]]
-                    
-        #             fig = go.Figure(data=go.Heatmap(
-        #                 z=z,
-        #                 x=['Negative', 'Positive'],
-        #                 y=['Negative', 'Positive'],
-        #                 text=[[str(val) for val in row] for row in z],
-        #                 texttemplate="%{text}",
-        #                 textfont={"size": 16},
-        #                 colorscale='Blues',
-        #                 showscale=False
-        #             ))
-                    
-        #             fig.update_layout(
-        #                 title=f'Confusion Matrix - {category}',
-        #                 xaxis_title='Predicted',
-        #                 yaxis_title='Actual',
-        #                 width=500,
-        #                 height=500
-        #             )
-                    
-        #             return fig
-                    
-        #     except Exception as e:
-        #         print(f"Error updating confusion matrix: {str(e)}")
-        #         return None
-        
-        # # 이벤트 핸들러 연결
-        # for dropdown in [model_dropdown, column_dropdown, category_dropdown]:
-        #     dropdown.change(
-        #         fn=update_confusion_matrix,
-        #         inputs=[model_dropdown, column_dropdown, category_dropdown],
-        #         outputs=confusion_matrix_plot
-        #     )
-       
 
 
 

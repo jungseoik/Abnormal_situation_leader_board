@@ -64,13 +64,14 @@ def my_custom_function(huggingface_id, benchmark_name, prompt_cfg_name):
     
     print(f"\n파이프라인 실행 결과:")
 
-sheet_manager = SheetManager()
-monitor = SheetMonitor(sheet_manager, check_interval=15.0)
-main_loop = MainLoop(sheet_manager, monitor, callback_function=my_custom_function)
+if __name__ == "__main__":
+    sheet_manager = SheetManager()
+    monitor = SheetMonitor(sheet_manager, check_interval=15.0)
+    main_loop = MainLoop(sheet_manager, monitor, callback_function=my_custom_function)
 
-try:
-    main_loop.start()
-    while True:
-        time.sleep(5)
-except KeyboardInterrupt:
-    main_loop.stop()
+    try:
+        main_loop.start()
+        while True:
+            time.sleep(5)
+    except KeyboardInterrupt:
+        main_loop.stop()
