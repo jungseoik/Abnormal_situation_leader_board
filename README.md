@@ -1,4 +1,7 @@
 ### 📌 **README - Abnormal Situation Leaderboard**  
+📜📜**For detailed module usage and configuration, please refer to** [**PIA-Benchmark**](https://www.notion.so/piaspace/MACS-1606a557fb8e80059a18c85ec4898056?pvs=4).  
+
+📜 **For historical details, please check past sprint records.**  
 
 ---
 
