@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from sheet_manager.sheet_loader.sheet2df import sheet2df
 from sheet_manager.sheet_convert.json2sheet import str2json
-# Mock 데이터 생성
+
 def calculate_avg_metrics(df):
     """
     각 모델의 카테고리별 평균 성능 지표를 계산
@@ -168,8 +168,6 @@ def metric_visual_tab():
     # 데이터 로드
     df = sheet2df(sheet_name="metric")
     avg_metrics_df = calculate_avg_metrics(df)
-    
-    # 가능한 모든 메트릭 리스트
     all_metrics = ['accuracy', 'precision', 'recall', 'specificity', 'f1', 
                   'balanced_accuracy', 'g_mean', 'mcc', 'npv', 'far']
 

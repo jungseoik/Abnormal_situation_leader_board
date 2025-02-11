@@ -11,7 +11,6 @@ abs_path = Path(__file__).parent
 def create_mock_data():
     benchmarks = ['VQA-2023', 'ImageQuality-2024', 'VideoEnhance-2024']
     categories = ['Animation', 'Game', 'Movie', 'Sports', 'Vlog']
-    
     data_list = []
     
     for benchmark in benchmarks:

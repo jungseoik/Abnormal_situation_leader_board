@@ -7,6 +7,7 @@ import pandas as pd
 from utils.except_dir import cust_listdir
 from utils.parser import load_config
 from utils.logger import custom_logger
+from dotenv import load_dotenv
 logger = custom_logger(__name__)
 
 DATA_SET = "dataset"
@@ -201,8 +202,7 @@ class PiaBenchMark:
             raise
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    import os
+
     load_dotenv()
 
     access_token = os.getenv("ACCESS_TOKEN")
