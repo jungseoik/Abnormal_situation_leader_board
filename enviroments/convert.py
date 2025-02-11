@@ -21,8 +21,6 @@ def get_json_from_env_var(env_var_name):
 
     return json_data
 
-
-
 def json_to_env_var(json_file_path, env_var_name="JSON_ENV_VAR"):
     """
     주어진 JSON 파일의 데이터를 환경 변수 형태로 변환하여 출력하는 함수.
