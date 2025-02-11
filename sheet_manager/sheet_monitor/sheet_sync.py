@@ -141,7 +141,6 @@ class SheetMonitor:
                 self.logger.error(f"Error in monitoring loop: {str(e)}")
                 time.sleep(self.check_interval)
 
-
 class MainLoop:
     """
     SheetMonitor와 연동하여 시트 데이터를 처리하는 메인 루프를 관리하는 클래스입니다.

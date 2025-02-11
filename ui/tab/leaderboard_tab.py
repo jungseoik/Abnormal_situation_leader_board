@@ -13,7 +13,6 @@ def leaderboard_tab():
                         label="Select Columns to Display:",
                         info="Check"
                     ),
-
                     search_columns=SearchColumns(
                         primary_column="Model name", 
                         secondary_columns=["TASK"],                 

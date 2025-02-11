@@ -1,23 +1,20 @@
 from pia_bench.checker.bench_checker import BenchChecker
-# from pia_bench.checker.sheet_checker import SheetChecker
 from pia_bench.event_alarm import EventDetector
 from pia_bench.metric import MetricsEvaluator
 from sheet_manager.sheet_crud.sheet_crud import SheetManager
 from pia_bench.bench import PiaBenchMark
 from dotenv import load_dotenv
 import os
-load_dotenv()
 import numpy as np
 from typing import Dict, Optional, Tuple
 import logging
 from dataclasses import dataclass
 from sheet_manager.sheet_checker.sheet_check import SheetChecker
-
-# logging.basicConfig(level=logging.INFO)
 from utils.logger import custom_logger
-logger = custom_logger(__name__)
-
 from enviroments.config import BASE_BENCH_PATH
+
+logger = custom_logger(__name__)
+load_dotenv()
 @dataclass
 class PipelineConfig:
     """파이프라인 설정을 위한 데이터 클래스"""
