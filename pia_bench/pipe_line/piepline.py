@@ -2,17 +2,15 @@ from pia_bench.checker.bench_checker import BenchChecker
 from pia_bench.event_alarm import EventDetector
 from pia_bench.metric import MetricsEvaluator
 from sheet_manager.sheet_crud.sheet_crud import SheetManager
-from pia_bench.bench import PiaBenchMark
+from pia_bench.bench_set import PiaBenchMarkSet
 from dotenv import load_dotenv
 import os
 import numpy as np
-from typing import Dict, Optional, Tuple
-import logging
+from typing import Dict, Tuple
 from dataclasses import dataclass
 from sheet_manager.sheet_checker.sheet_check import SheetChecker
 from utils.logger import custom_logger
 from enviroments.config import BASE_BENCH_PATH
-
 logger = custom_logger(__name__)
 load_dotenv()
 @dataclass
@@ -48,7 +46,7 @@ class BenchmarkPipeline:
     
     def __init__(self, config: PipelineConfig):
         self.config = config
-        self.logger = logging.getLogger(self.__class__.__name__)
+        # logger = logging.getLogger(self.__class__.__name__)
         self.status = BenchmarkPipelineStatus()
         self.access_token = os.getenv("ACCESS_TOKEN")
         self.cfg_prompt = os.path.splitext(os.path.basename(self.config.cfg_target_path))[0]
@@ -57,7 +55,6 @@ class BenchmarkPipeline:
         self.sheet_manager = SheetManager()
         self.sheet_checker = SheetChecker(self.sheet_manager)
         self.bench_checker = BenchChecker(self.config.base_path)
-
         self.bench_result_dict = None
         
     def run(self) -> BenchmarkPipelineStatus:
@@ -68,7 +65,7 @@ class BenchmarkPipeline:
             
             if not proceed:
                 self.status.current_stage = "completed_no_action_needed"
-                self.logger.info("벤치마크가 이미 존재하여 추가 작업이 필요하지 않습니다.")
+                logger.info("벤치마크가 이미 존재하여 추가 작업이 필요하지 않습니다.")
                 return self.status
                 
             self.status.current_stage = "bench_check"
@@ -82,13 +79,13 @@ class BenchmarkPipeline:
             return self.status
             
         except Exception as e:
-            self.logger.error(f"파이프라인 실행 중 에러 발생: {str(e)}")
+            logger.error(f"파이프라인 실행 중 에러 발생: {str(e)}")
             self.status.current_stage = "error"
             return self.status
             
     def _check_sheet(self) -> bool:
         """구글 시트 상태 체크"""
-        self.logger.info("시트 상태 체크 시작")
+        logger.info("시트 상태 체크 시작")
         model_added, benchmark_exists = self.sheet_checker.check_model_and_benchmark(
             self.config.model_name,
             self.config.benchmark_name
@@ -96,17 +93,17 @@ class BenchmarkPipeline:
         self.status.sheet_status = (model_added, benchmark_exists)
         
         if model_added:
-            self.logger.info("새로운 모델이 추가되었습니다")
+            logger.info("새로운 모델이 추가되었습니다")
         if not benchmark_exists:
-            self.logger.info("벤치마크 측정이 필요합니다")
+            logger.info("벤치마크 측정이 필요합니다")
             return True  # 벤치마크 측정이 필요한 경우만 다음 단계로 진행
             
-        self.logger.info("이미 벤치마크가 존재합니다. 파이프라인을 종료합니다.")
+        logger.info("이미 벤치마크가 존재합니다. 파이프라인을 종료합니다.")
         return False  # 벤치마크가 이미 있으면 여기서 중단
         
     def _check_bench(self) -> bool:
         """로컬 벤치마크 환경 체크"""
-        self.logger.info("벤치마크 환경 체크 시작")
+        logger.info("벤치마크 환경 체크 시작")
         self.status.bench_status = self.bench_checker.check_benchmark(
             self.config.benchmark_name,
             self.config.model_name,
@@ -118,7 +115,7 @@ class BenchmarkPipeline:
         
         # no bench 상태 벤치를 돌린적이 없음 폴더구조도 없음
         if self.status.bench_result == "no bench":
-            self.logger.error("벤치마크 실행에 필요한 기본 폴더구조가 없습니다.")
+            logger.error("벤치마크 실행에 필요한 기본 폴더구조가 없습니다.")
             return True
             
         return True  # 그 외의 경우만 다음 단계로 진행
@@ -133,12 +130,12 @@ class BenchmarkPipeline:
             self._execute_metrics_generation()
         else:
             self._execute_vector_generation()
-            self.logger.warning("폴더구조가 없습니다")
+            logger.warning("폴더구조가 없습니다")
             
     def _execute_full_pipeline(self):
         """모든 조건이 충족된 경우의 실행 로직"""
-        self.logger.info("전체 파이프라인 실행 중...")
-        pia_benchmark = PiaBenchMark(
+        logger.info("전체 파이프라인 실행 중...")
+        pia_benchmark = PiaBenchMarkSet(
                                 benchmark_path  = f"{BASE_BENCH_PATH}/{self.config.benchmark_name}" ,
                                 model_name=self.config.model_name, 
                                 cfg_target_path= self.config.cfg_target_path , 
@@ -153,9 +150,9 @@ class BenchmarkPipeline:
 
     def _execute_vector_generation(self):
         """벡터 생성이 필요한 경우의 실행 로직"""
-        self.logger.info("벡터 생성 중...")
+        logger.info("벡터 생성 중...")
         # 구현 필요
-        pia_benchmark = PiaBenchMark(
+        pia_benchmark = PiaBenchMarkSet(
                                 benchmark_path  = f"{BASE_BENCH_PATH}/{self.config.benchmark_name}" ,
                                 model_name=self.config.model_name, 
                                 cfg_target_path= self.config.cfg_target_path , 
@@ -181,9 +178,9 @@ class BenchmarkPipeline:
         
     def _execute_metrics_generation(self):
         """메트릭 생성이 필요한 경우의 실행 로직"""
-        self.logger.info("메트릭 생성 중...")
+        logger.info("메트릭 생성 중...")
         # 구현 필요
-        pia_benchmark = PiaBenchMark(
+        pia_benchmark = PiaBenchMarkSet(
                                 benchmark_path  = f"{BASE_BENCH_PATH}/{self.config.benchmark_name}" ,
                                 model_name=self.config.model_name, 
                                 cfg_target_path= self.config.cfg_target_path , 

@@ -1,57 +1,11 @@
-
-import sys
-import os
 from sheet_manager.sheet_crud.sheet_crud import SheetManager
 from sheet_manager.sheet_monitor.sheet_sync import SheetMonitor, MainLoop
 import time
 from pia_bench.pipe_line.piepline import BenchmarkPipeline, PipelineConfig
 from sheet_manager.sheet_convert.json2sheet import update_benchmark_json
 import os
-import shutil
-import json
 from enviroments.config import BASE_BENCH_PATH
-def calculate_total_accuracy(metrics: dict) -> float:
-    """
-    모든 카테고리의 평균 정확도를 계산합니다. 'micro_avg' 카테고리는 제외됩니다.
-
-    Args:
-        metrics (Dict[str, Dict[str, float]]): 정확도 값을 포함하는 메트릭 딕셔너리
-            형식: {
-                "카테고리1": {"accuracy": float, ...},
-                "카테고리2": {"accuracy": float, ...},
-                ...
-            }
-
-    Returns:
-        float: 모든 카테고리의 평균 정확도 값
-
-    Raises:
-        ValueError: 메트릭 딕셔너리에 accuracy 값이 하나도 없는 경우 발생
-
-    Examples:
-        >>> metrics = {
-        ...     "category1": {"accuracy": 0.8},
-        ...     "category2": {"accuracy": 0.9},
-        ...     "micro_avg": {"accuracy": 0.85}
-        ... }
-        >>> calculate_total_accuracy(metrics)
-        0.85
-    """
-    total_accuracy = 0
-    total_count = 0
-
-    for category, values in metrics.items():
-        if category == "micro_avg":
-            continue  # Skip 'micro_avg'
-
-        if "accuracy" in values:
-            total_accuracy += values["accuracy"]
-            total_count += 1
-
-    if total_count == 0:
-        raise ValueError("No accuracy values found in the provided metrics dictionary.")
-
-    return total_accuracy / total_count
+from utils.calcul import calculate_total_accuracy
 
 def callback_custom_funciton(huggingface_id, benchmark_name, prompt_cfg_name):
     """
@@ -69,7 +23,7 @@ def callback_custom_funciton(huggingface_id, benchmark_name, prompt_cfg_name):
         benchmark_name=benchmark_name,
         cfg_target_path=f"{BASE_BENCH_PATH}/{benchmark_name}/CFG/{prompt_cfg_name}.json",
         base_path=BASE_BENCH_PATH
-)
+)   
     pipeline = BenchmarkPipeline(config)
     pipeline.run()
     result = pipeline.bench_result_dict

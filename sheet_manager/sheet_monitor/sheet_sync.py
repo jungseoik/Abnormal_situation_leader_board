@@ -283,9 +283,9 @@ if __name__ == "__main__":
     from pathlib import Path
     sys.path.append(str(Path(__file__).parent.parent.parent))
     from sheet_manager.sheet_crud.sheet_crud import SheetManager
-    from pia_bench.pipe_line.piepline import PiaBenchMark
+    from pia_bench.pipe_line.piepline import PiaBenchMarkSet
     def my_custom_function(huggingface_id, benchmark_name, prompt_cfg_name):
-        piabenchmark = PiaBenchMark(huggingface_id, benchmark_name, prompt_cfg_name)
+        piabenchmark = PiaBenchMarkSet(huggingface_id, benchmark_name, prompt_cfg_name)
         piabenchmark.bench_start()
 
     # Initialize components

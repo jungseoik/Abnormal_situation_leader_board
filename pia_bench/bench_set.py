@@ -21,7 +21,7 @@ METRIC = "metric"
 MSRVTT = "MSRVTT"
 MODEL = "models"
 
-class PiaBenchMark:
+class PiaBenchMarkSet:
     def __init__(self, benchmark_path :str, cfg_target_path : str = None , model_name : str = MSRVTT , token:str =None):
         """
         PIA 벤치마크 시스템을 구축 위한 클래스입니다.
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     benchmark_path = "/home/jungseoik/data/Abnormal_situation_leader_board/assets/PIA"
     cfg_target_path= "/home/jungseoik/data/Abnormal_situation_leader_board/assets/PIA/CFG/topk.json"
 
-    pia_benchmark = PiaBenchMark(benchmark_path ,model_name=model_name, cfg_target_path= cfg_target_path , token=access_token )
+    pia_benchmark = PiaBenchMarkSet(benchmark_path ,model_name=model_name, cfg_target_path= cfg_target_path , token=access_token )
     pia_benchmark.preprocess_structure()
     pia_benchmark.preprocess_label_to_csv()
     print("Categories identified:", pia_benchmark.categories)

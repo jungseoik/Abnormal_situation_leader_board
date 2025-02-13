@@ -4,8 +4,40 @@ import pandas as pd
 import gradio as gr
 import matplotlib.pyplot as plt
 from utils.except_dir import cust_listdir
+
 def get_video_metadata(video_path, category, benchmark):
-    """Extract metadata from a video file."""
+    """
+    비디오 파일로부터 메타데이터를 추출합니다.
+    이 함수는 OpenCV를 사용하여 비디오 파일의 다양한 메타데이터를 추출하고,
+    추출된 정보를 딕셔너리 형태로 반환합니다.
+
+    Parameters
+    ----------
+    video_path : str
+        비디오 파일의 전체 경로
+    category : str
+        비디오가 속한 카테고리명
+    benchmark : str
+        비디오가 속한 벤치마크명
+
+    Returns
+    -------
+    Optional[Dict[str, Union[str, float, int]]]
+        비디오 메타데이터를 포함하는 딕셔너리. 비디오 파일을 열 수 없는 경우 None 반환.
+        딕셔너리는 다음 키들을 포함:
+        - video_name (str): 비디오 파일명
+        - resolution (str): 해상도 (예: "1920x1080")
+        - video_duration (str): 재생 시간 (분:초 형식)
+        - category (str): 비디오 카테고리
+        - benchmark (str): 벤치마크명
+        - duration_seconds (float): 재생 시간(초)
+        - total_frames (int): 총 프레임 수
+        - file_format (str): 파일 확장자
+        - file_size_mb (float): 파일 크기(MB)
+        - aspect_ratio (float): 화면 비율
+        - fps (float): 초당 프레임 수
+
+    """
     cap = cv2.VideoCapture(video_path)
     
     if not cap.isOpened():
@@ -37,8 +69,73 @@ def get_video_metadata(video_path, category, benchmark):
         "fps": fps
     }
 
-def process_videos_in_directory(root_dir):
-    """Process all videos in the given directory structure."""
+def process_videos_in_directory(root_dir: str = "root"):
+    """
+    주어진 루트 디렉토리 내의 모든 비디오 파일들의 메타데이터를 수집하여 DataFrame으로 반환합니다.
+    이 함수는 다음과 같은 특정 디렉토리 구조를 전제로 합니다:
+
+    root_dir/
+    ├── benchmark_A/
+    │   └── dataset/
+    │       ├── category1/
+    │       │   ├── video1.mp4
+    │       │   └── video2.avi
+    │       └── category2/
+    │           └── video3.mkv
+    ├── benchmark_B/
+    │   └── dataset/
+    │       └── category1/
+    │           └── video4.mp4
+    
+    Parameters
+    ----------
+    root_dir : str
+        비디오 데이터셋이 저장된 최상위 디렉토리 경로
+        
+    Returns
+    -------
+    pandas.DataFrame
+        다음 컬럼들을 포함하는 DataFrame:
+        - video_name: 비디오 파일명
+        - resolution: 비디오 해상도 (예: "1920x1080")
+        - video_duration: 비디오 길이 (분:초 형식)
+        - category: 비디오가 속한 카테고리
+        - benchmark: 비디오가 속한 벤치마크
+        - duration_seconds: 비디오 길이 (초 단위)
+        - total_frames: 총 프레임 수
+        - file_format: 파일 확장자
+        - file_size_mb: 파일 크기 (MB)
+        - aspect_ratio: 화면 비율
+        - fps: 초당 프레임 수
+        
+    Notes
+    -----
+    1. 디렉토리 구조 요구사항:
+        - root_dir 아래에는 여러 벤치마크 폴더들이 있어야 함
+        - 각 벤치마크 폴더 안에는 반드시 'dataset' 폴더가 있어야 함 
+        - dataset 폴더 안에는 카테고리별 폴더들이 있어야 함
+        - 카테고리 폴더 안에 실제 비디오 파일들이 위치
+    
+    2. 지원하는 비디오 포맷:
+        - .mp4
+        - .avi
+        - .mkv
+        - .mov
+        - .MOV
+    
+        
+    Examples
+    --------
+    >>> df = process_videos_in_directory("path/to/dataset")
+    >>> print(df.columns)
+    Index(['video_name', 'resolution', 'video_duration', 'category', 'benchmark',
+           'duration_seconds', 'total_frames', 'file_format', 'file_size_mb',
+           'aspect_ratio', 'fps'], dtype='object')
+    
+    >>> print(df.head())
+       video_name resolution video_duration category benchmark  ...
+    0  video1.mp4  1920x1080         1:30    cat1    bench_A  ...
+    """
     video_metadata_list = []
     
     # 벤치마크 폴더들을 순회
